@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -8,6 +9,8 @@ from typing import Any
 
 from app.config import settings
 from app.models import AnalyticsSummary, Job
+
+logger = logging.getLogger(__name__)
 
 
 class JsonStore:
@@ -25,8 +28,14 @@ class JsonStore:
     def analytics_path(self, job_id: str) -> Path:
         return self.artifacts_dir / job_id / "analytics_summary.json"
 
+    def _write_atomic(self, path: Path, text: str) -> None:
+        """Write *text* to *path* atomically (write to .tmp then rename)."""
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(text, encoding="utf-8")
+        tmp.replace(path)
+
     def save_job(self, job: Job) -> None:
-        self.job_path(job.job_id).write_text(job.model_dump_json(indent=2), encoding="utf-8")
+        self._write_atomic(self.job_path(job.job_id), job.model_dump_json(indent=2))
 
     def get_job(self, job_id: str) -> Job | None:
         path = self.job_path(job_id)
@@ -35,10 +44,14 @@ class JsonStore:
         return Job.model_validate_json(path.read_text(encoding="utf-8"))
 
     def list_jobs(self) -> list[Job]:
-        jobs = [
-            Job.model_validate_json(path.read_text(encoding="utf-8"))
-            for path in self.jobs_dir.glob("*.json")
-        ]
+        jobs: list[Job] = []
+        for path in self.jobs_dir.glob("*.json"):
+            if path.suffix == ".tmp":
+                continue
+            try:
+                jobs.append(Job.model_validate_json(path.read_text(encoding="utf-8")))
+            except Exception:
+                logger.warning("Skipping corrupt job file: %s", path.name)
         return sorted(jobs, key=lambda job: job.created_at, reverse=True)
 
     def delete_job(self, job_id: str) -> None:
@@ -50,7 +63,7 @@ class JsonStore:
     def save_analytics(self, summary: AnalyticsSummary) -> None:
         path = self.analytics_path(summary.job_id)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(summary.model_dump_json(indent=2), encoding="utf-8")
+        self._write_atomic(path, summary.model_dump_json(indent=2))
 
     def get_analytics(self, job_id: str) -> AnalyticsSummary | None:
         path = self.analytics_path(job_id)

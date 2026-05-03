@@ -24,7 +24,7 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
 
 export function StatusBadge({ status }: { status: string }) {
   const color = status === "complete" ? "bg-accent/15 text-accent" : status === "failed" ? "bg-danger/15 text-danger" : "bg-accent-2/15 text-accent-2";
-  return <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${color}`}>{status.replace("_", " ")}</span>;
+  return <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${color}`}>{status.replaceAll("_", " ")}</span>;
 }
 
 export function Stat({ label, value }: { label: string; value: string | number }) {

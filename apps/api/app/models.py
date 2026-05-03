@@ -36,9 +36,9 @@ class UploadResponse(BaseModel):
 
 
 class ZoneDistribution(BaseModel):
-    paint_pct: float
-    midrange_pct: float
-    three_point_pct: float
+    paint_pct: float = Field(ge=0, le=100)
+    midrange_pct: float = Field(ge=0, le=100)
+    three_point_pct: float = Field(ge=0, le=100)
 
 
 class PlayerAnalytics(BaseModel):

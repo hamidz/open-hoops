@@ -1,0 +1,16 @@
+# Root-level pyproject.toml
+# Provides pytest configuration when tests are run from the repository root
+# (e.g. `pytest services/` or `pytest apps/ services/`).
+#
+# Per-service pyproject.toml files remain authoritative for per-service
+# invocations (e.g. `pytest services/cv_worker/tests/`).
+
+[tool.pytest.ini_options]
+# Add each service root to sys.path so their packages are importable when
+# tests are collected from the repo root in a single pytest invocation.
+pythonpath = [
+    "apps/api",
+    "services/cv_worker",
+    "services/analytics_worker",
+    "services/llm_service",
+]
