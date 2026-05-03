@@ -42,11 +42,20 @@ export default function JobDetailPage() {
               <div className="flex items-center gap-3"><h1 className="text-4xl font-black">{job.label ?? job.original_filename}</h1><StatusBadge status={job.status} /></div>
               <p className="mt-2 text-foreground/70">{job.original_filename} · {(job.file_size_bytes / 1024 / 1024).toFixed(2)} MB · uploaded {new Date(job.created_at).toLocaleString()}</p>
             </div>
-            {job.status !== "processing" && <button className="rounded-full border border-danger px-4 py-2 font-bold text-danger" onClick={() => { if (confirm("Delete this job?")) deleteMutation.mutate(); }}>Delete</button>}
+            {job.status !== "processing" && (
+              <button
+                className="rounded-full border border-danger px-4 py-2 font-bold text-danger disabled:opacity-50"
+                disabled={deleteMutation.isPending}
+                onClick={() => { if (confirm("Delete this job?")) deleteMutation.mutate(); }}
+              >
+                {deleteMutation.isPending ? "Deleting…" : "Delete"}
+              </button>
+            )}
           </div>
           <div className="mt-6 h-3 overflow-hidden rounded-full bg-panel"><div className="h-full bg-accent" style={{ width: `${job.progress_pct}%` }} /></div>
           {job.status === "calibration_needed" && <Card className="mt-6"><Link className="text-accent" href={`/dashboard/jobs/${job.job_id}/calibrate`}>Calibrate Now</Link></Card>}
           {job.status === "failed" && <Card className="mt-6 text-danger">{job.error_message ?? "Job failed."}</Card>}
+          {deleteMutation.error && <Card className="mt-6 text-danger">Delete failed: {(deleteMutation.error as Error).message}</Card>}
           {analyticsQuery.isLoading && <Card className="mt-6">Loading analytics…</Card>}
           {analytics && (
             <>

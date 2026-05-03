@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from base64 import b64decode
 from pathlib import Path
 from uuid import uuid4
@@ -12,6 +13,7 @@ from app.services.analytics import generate_first_workflow_stats
 from app.services.store import store
 
 ALLOWED_EXTENSIONS = {".mp4", ".mov"}
+_CHUNK_SIZE = 1024 * 1024  # 1 MiB — keeps RAM flat regardless of video size
 # Minimal valid 1x1 JPEG until Phase 06 extracts a real frame-zero image.
 PLACEHOLDER_JPEG = b64decode(
     "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAH/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAEFAqf/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/ASP/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/ASP/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAY/Al//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/IV//2gAMAwEAAgADAAAAEP/EABQRAQAAAAAAAAAAAAAAAAAAABD/2gAIAQMBAT8QP//EABQRAQAAAAAAAAAAAAAAAAAAABD/2gAIAQIBAT8QP//EABQQAQAAAAAAAAAAAAAAAAAAABD/2gAIAQEAAT8QP//Z"
@@ -27,7 +29,7 @@ def validate_upload(filename: str, size: int) -> None:
         )
     if size > settings.max_upload_size_bytes:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail={
                 "error": "file_too_large",
                 "detail": "Video exceeds the configured upload limit.",
@@ -37,8 +39,9 @@ def validate_upload(filename: str, size: int) -> None:
 
 async def create_upload_job(video: UploadFile, label: str | None, sport: str) -> Job:
     original_filename = video.filename or "upload.mp4"
-    content = await video.read()
-    validate_upload(original_filename, len(content))
+
+    # Validate extension before reading a single byte (size=0 skips the size check).
+    validate_upload(original_filename, 0)
 
     job_id = str(uuid4())
     suffix = Path(original_filename).suffix.lower()
@@ -46,29 +49,54 @@ async def create_upload_job(video: UploadFile, label: str | None, sport: str) ->
     video_dir = store.videos_dir / job_id
     video_dir.mkdir(parents=True, exist_ok=True)
     video_path = video_dir / f"video{suffix}"
-    video_path.write_bytes(content)
 
-    artifact_dir = store.artifacts_dir / job_id
-    artifact_dir.mkdir(parents=True, exist_ok=True)
-    frame_path = artifact_dir / "frame_0.jpg"
-    frame_path.write_bytes(PLACEHOLDER_JPEG)
+    try:
+        # Stream directly to disk in 1 MiB chunks — avoids loading the entire video
+        # into process RAM (critical for files up to the 4 GB upload limit).
+        file_size = 0
+        with video_path.open("wb") as fp:
+            while True:
+                chunk = await video.read(_CHUNK_SIZE)
+                if not chunk:
+                    break
+                file_size += len(chunk)
+                if file_size > settings.max_upload_size_bytes:
+                    raise HTTPException(
+                        status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                        detail={
+                            "error": "file_too_large",
+                            "detail": "Video exceeds the configured upload limit.",
+                        },
+                    )
+                fp.write(chunk)
 
-    summary = generate_first_workflow_stats(job_id, len(content))
-    store.save_analytics(summary)
+        artifact_dir = store.artifacts_dir / job_id
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+        frame_path = artifact_dir / "frame_0.jpg"
+        frame_path.write_bytes(PLACEHOLDER_JPEG)
 
-    job = Job(
-        job_id=job_id,
-        status="complete",
-        progress_pct=100,
-        label=label if label is not None else Path(original_filename).stem,
-        sport=sport,
-        original_filename=original_filename,
-        file_size_bytes=len(content),
-        video_url=f"file://{video_path}",
-        frame_zero_url=f"file://{frame_path}",
-        analytics_summary_url=f"file://{store.analytics_path(job_id)}",
-        created_at=created_at,
-        updated_at=store.now(),
-    )
-    store.save_job(job)
+        summary = generate_first_workflow_stats(job_id, file_size)
+        store.save_analytics(summary)
+
+        job = Job(
+            job_id=job_id,
+            status="complete",
+            progress_pct=100,
+            label=label if label is not None else Path(original_filename).stem,
+            sport=sport,
+            original_filename=original_filename,
+            file_size_bytes=file_size,
+            video_url=f"file://{video_path}",
+            frame_zero_url=f"file://{frame_path}",
+            analytics_summary_url=f"file://{store.analytics_path(job_id)}",
+            created_at=created_at,
+            updated_at=store.now(),
+        )
+        store.save_job(job)
+    except Exception:
+        # Clean up any partially-created directories so failed uploads don't leave debris.
+        shutil.rmtree(video_dir, ignore_errors=True)
+        shutil.rmtree(store.artifacts_dir / job_id, ignore_errors=True)
+        raise
+
     return job
