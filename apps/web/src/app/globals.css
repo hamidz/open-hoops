@@ -21,7 +21,7 @@
   --color-accent-2: var(--accent-2);
   --color-danger: var(--danger);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-mono), "SFMono-Regular", Consolas, monospace;
+  --font-mono: var(--font-jetbrains), "SFMono-Regular", Consolas, monospace;
 }
 
 * { box-sizing: border-box; }
