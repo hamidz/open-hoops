@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, status
 
 from app.models import AnalyticsSummary, Job, UploadResponse
@@ -10,7 +12,10 @@ router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
 def _job_or_404(job_id: str) -> Job:
     job = store.get_job(job_id)
     if job is None:
-        raise HTTPException(status_code=404, detail={"error": "not_found", "detail": "Job not found."})
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "detail": "Job not found."},
+        )
     return job
 
 
@@ -21,9 +26,9 @@ def list_jobs(limit: int = 50, offset: int = 0) -> list[Job]:
 
 @router.post("/upload", response_model=UploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_job(
-    video: UploadFile = File(...),
-    label: str | None = Form(default=None),
-    sport: str = Form(default="basketball"),
+    video: Annotated[UploadFile, File()],
+    label: Annotated[str | None, Form()] = None,
+    sport: Annotated[str, Form()] = "basketball",
 ) -> UploadResponse:
     job = await create_upload_job(video, label, sport)
     return UploadResponse(job_id=job.job_id, status=job.status, created_at=job.created_at)
@@ -39,7 +44,10 @@ def get_analytics(job_id: str) -> AnalyticsSummary:
     _job_or_404(job_id)
     summary = store.get_analytics(job_id)
     if summary is None:
-        raise HTTPException(status_code=404, detail={"error": "not_found", "detail": "Analytics not found."})
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "detail": "Analytics not found."},
+        )
     return summary
 
 
@@ -47,7 +55,10 @@ def get_analytics(job_id: str) -> AnalyticsSummary:
 def retry_job(job_id: str) -> Job:
     job = _job_or_404(job_id)
     if job.status != "failed":
-        raise HTTPException(status_code=409, detail={"error": "invalid_state", "detail": "Only failed jobs can be retried."})
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "invalid_state", "detail": "Only failed jobs can be retried."},
+        )
     job.status = "complete"
     job.progress_pct = 100
     job.error_message = None

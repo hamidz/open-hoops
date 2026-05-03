@@ -34,7 +34,10 @@ class JsonStore:
         return Job.model_validate_json(path.read_text(encoding="utf-8"))
 
     def list_jobs(self) -> list[Job]:
-        jobs = [Job.model_validate_json(path.read_text(encoding="utf-8")) for path in self.jobs_dir.glob("*.json")]
+        jobs = [
+            Job.model_validate_json(path.read_text(encoding="utf-8"))
+            for path in self.jobs_dir.glob("*.json")
+        ]
         return sorted(jobs, key=lambda job: job.created_at, reverse=True)
 
     def delete_job(self, job_id: str) -> None:

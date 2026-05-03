@@ -26,7 +26,9 @@ def test_validate_upload_rejects_large_file(monkeypatch: pytest.MonkeyPatch) -> 
     assert exc.value.status_code == 413
 
 
-def test_upload_flow_creates_job_and_analytics(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_upload_flow_creates_job_and_analytics(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     from app.services import uploads
     from app.services.store import JsonStore
 

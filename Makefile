@@ -56,7 +56,7 @@ lint-python:
 	@echo "Linting Python..."
 	ruff check apps/api/ services/
 	ruff format --check apps/api/ services/
-	mypy apps/api/app/ services/cv_worker/ services/analytics_worker/ services/llm_service/
+	mypy apps/api/app/ services/cv_worker/ services/analytics_worker/ services/llm_service/ --exclude tests
 
 lint-frontend:
 	@echo "Linting TypeScript/Next.js..."

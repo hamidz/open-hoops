@@ -21,4 +21,7 @@ app.include_router(jobs.router)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     if getattr(exc, "status_code", None):
         raise exc
-    return JSONResponse(status_code=500, content={"error": "internal_error", "detail": "Unexpected server error."})
+    return JSONResponse(
+        status_code=500,
+        content={"error": "internal_error", "detail": "Unexpected server error."},
+    )
