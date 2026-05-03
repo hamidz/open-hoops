@@ -12,6 +12,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - Project planning documentation (Phases 00–12)
 - Architecture, ADR, Glossary, Stack, and Data Schema reference docs
+- Product requirements, API contract, UX flows, security/privacy, testing strategy, and planning gap review docs
 - `CONTRIBUTING.md` contributor guide
 - `.github/workflows/copilot-setup-steps.yml` — Copilot agent environment setup
 

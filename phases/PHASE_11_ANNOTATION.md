@@ -65,6 +65,7 @@ class PlayerAnnotation(BaseModel):
     flag_reason: Optional[str]
 
 class ShotAnnotation(BaseModel):
+    shot_id: str
     frame_index: int
     track_id: int
     court_xy_m: tuple[float, float]
@@ -76,6 +77,7 @@ class TeamColors(BaseModel):
     away_color: str
 
 class JobAnnotations(BaseModel):
+    schema_version: str = "1.0"
     job_id: str
     player_annotations: list[PlayerAnnotation]
     shot_annotations: list[ShotAnnotation]

@@ -125,12 +125,14 @@ Away - Avg Spacing: {{ teams.away.avg_spacing_m | round(1) }} m, Court Coverage:
 - [ ] Store report as `artifacts/{job_id}/coaching_report.json`:
 ```json
 {
+  "schema_version": "1.0",
   "job_id": "uuid",
   "model": "llama3",
   "generated_at": "ISO8601",
   "report_text": "...",
   "analytics_summary_version": "1.0",
-  "prompt_template_version": "1.0"
+  "prompt_template_version": "1.0",
+  "annotations_applied": false
 }
 ```
 

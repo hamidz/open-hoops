@@ -116,11 +116,14 @@ The analytics worker should include a utility function:
 
 ### Analytics Summary Schema (Finalized)
 
+This phase must use the canonical analytics schema in `docs/DATA_SCHEMAS.md`.
+
 ```json
 {
   "schema_version": "1.0",
   "job_id": "uuid",
   "computed_at": "ISO8601",
+  "annotations_applied": false,
   "duration_seconds": 600,
   "total_sampled_frames": 6000,
   "avg_detections_per_frame": 9.2,
@@ -140,9 +143,12 @@ The analytics worker should include a utility function:
         "left_paint": 0.28,
         "left_mid_range": 0.12,
         "left_three": 0.18,
+        "left_corner_three": 0.02,
         "right_paint": 0.05,
         "right_mid_range": 0.15,
-        "right_three": 0.22
+        "right_three": 0.18,
+        "right_corner_three": 0.02,
+        "center": 0.00
       }
     }
   ],

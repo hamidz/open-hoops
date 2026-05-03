@@ -97,29 +97,40 @@ Enqueue analytics job (Phase 09)
 
 ### Telemetry Output
 
-- [ ] Implement telemetry JSON writer per schema in `ARCHITECTURE.md`:
+- [ ] Implement telemetry JSON writer per canonical schema in `docs/DATA_SCHEMAS.md`:
 
 ```json
 {
+  "schema_version": "1.0",
   "job_id": "uuid",
+  "sport": "basketball",
   "video_metadata": {
+    "original_filename": "game_2025_01_15.mp4",
     "fps": 30,
     "total_frames": 54000,
-    "resolution": [1920, 1080],
+    "resolution_px": [1920, 1080],
     "duration_seconds": 1800,
-    "sampled_every_n_frames": 3
+    "sampled_every_n_frames": 3,
+    "total_sampled_frames": 18000
+  },
+  "calibration": {
+    "applied": true,
+    "court_dimensions_m": [28.65, 15.24],
+    "reprojection_error_px": 6.2
   },
   "frames": [
     {
-      "frame": 0,
+      "frame_index": 0,
       "timestamp_ms": 0,
       "detections": [
         {
           "track_id": 1,
-          "class": "person",
+          "object_class": "person",
           "bbox_px": [100, 200, 150, 350],
           "confidence": 0.91,
-          "court_xy": [4.2, 7.8]
+          "court_xy_m": [4.2, 7.8],
+          "team": null,
+          "label": null
         }
       ]
     }

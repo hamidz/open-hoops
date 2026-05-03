@@ -63,7 +63,7 @@ For each Python service (`apps/api`, `services/cv_worker`, `services/analytics_w
 ### Shared Types (`packages/shared_types`)
 
 - [ ] Pydantic models for: `Job`, `Detection`, `Track`, `AnalyticsSummary`
-- [ ] TypeScript type equivalents (manual or generated)
+- [ ] Generated TypeScript type equivalents (see `docs/ADR.md` ADR-010; never hand-edit generated files)
 
 ### Developer Tooling
 
