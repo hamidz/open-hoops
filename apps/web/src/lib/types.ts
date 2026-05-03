@@ -1,0 +1,47 @@
+export type JobStatus = "queued" | "processing" | "calibration_needed" | "complete" | "failed";
+
+export interface Job {
+  job_id: string;
+  status: JobStatus;
+  progress_pct: number;
+  label: string | null;
+  sport: string;
+  original_filename: string;
+  file_size_bytes: number;
+  video_url: string;
+  frame_zero_url: string | null;
+  telemetry_url: string | null;
+  analytics_summary_url: string | null;
+  report_url: string | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlayerAnalytics {
+  track_id: number;
+  label: string | null;
+  team: string;
+  total_distance_m: number;
+  avg_speed_ms: number;
+  max_speed_ms: number;
+  court_coverage_pct: number;
+  zone_distribution: {
+    paint_pct: number;
+    midrange_pct: number;
+    three_point_pct: number;
+  };
+}
+
+export interface AnalyticsSummary {
+  schema_version: string;
+  job_id: string;
+  computed_at: string;
+  annotations_applied: boolean;
+  duration_seconds: number;
+  total_sampled_frames: number;
+  avg_detections_per_frame: number;
+  ball_tracking_coverage_pct: number;
+  team_spacing_avg_m: number;
+  players: PlayerAnalytics[];
+}

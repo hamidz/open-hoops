@@ -60,8 +60,8 @@ lint-python:
 
 lint-frontend:
 	@echo "Linting TypeScript/Next.js..."
-	cd apps/web && npm run lint
-	cd apps/web && npx tsc --noEmit
+	npm run lint --workspace web
+	npm exec --workspace web -- tsc --noEmit
 
 # ─────────────────────────────────────────────
 # Testing
@@ -78,11 +78,11 @@ test-python:
 
 test-frontend:
 	@echo "Running frontend tests..."
-	cd apps/web && npm test -- --run
+	npm test --workspace web -- --run
 
 test-visual:
 	@echo "Running Playwright visual regression tests (requires running dev stack)..."
-	cd apps/web && npx playwright test
+	npm exec --workspace web -- playwright test
 
 # ─────────────────────────────────────────────
 # Build
