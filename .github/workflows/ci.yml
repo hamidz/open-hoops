@@ -1,0 +1,222 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "phase/**", "fix/**", "docs/**", "chore/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Python Lint
+  # ─────────────────────────────────────────────
+  lint-python:
+    name: Python Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install ruff and mypy
+        run: pip install ruff mypy
+
+      - name: ruff check
+        run: ruff check apps/api/ services/ || true  # Warn until Phase 01 scaffolding exists
+
+      - name: ruff format check
+        run: ruff format --check apps/api/ services/ || true
+
+  # ─────────────────────────────────────────────
+  # Frontend Lint
+  # ─────────────────────────────────────────────
+  lint-frontend:
+    name: Frontend Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: cd apps/web && npm ci
+        continue-on-error: true  # Before Phase 01 scaffolding
+
+      - name: ESLint
+        run: cd apps/web && npm run lint
+        continue-on-error: true
+
+      - name: TypeScript check
+        run: cd apps/web && npx tsc --noEmit
+        continue-on-error: true
+
+  # ─────────────────────────────────────────────
+  # Python Tests
+  # ─────────────────────────────────────────────
+  test-python:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    needs: lint-python
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: openhoops
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: openhoops_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U openhoops"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install test dependencies (API)
+        run: |
+          if [ -f apps/api/requirements-dev.txt ]; then
+            pip install -r apps/api/requirements-dev.txt
+          fi
+        continue-on-error: true
+
+      - name: Run API tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://openhoops:testpassword@localhost:5432/openhoops_test
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          if [ -d apps/api/tests ]; then
+            pytest apps/api/tests/ -v --tb=short
+          else
+            echo "No API tests yet (Phase 01 pending)"
+          fi
+
+      - name: Run CV Worker tests
+        run: |
+          if [ -d services/cv_worker/tests ]; then
+            pytest services/cv_worker/tests/ -v --tb=short
+          else
+            echo "No CV Worker tests yet (Phase 05 pending)"
+          fi
+
+      - name: Run Analytics Worker tests
+        run: |
+          if [ -d services/analytics_worker/tests ]; then
+            pytest services/analytics_worker/tests/ -v --tb=short
+          else
+            echo "No Analytics Worker tests yet (Phase 09 pending)"
+          fi
+
+  # ─────────────────────────────────────────────
+  # Frontend Tests
+  # ─────────────────────────────────────────────
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    needs: lint-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: cd apps/web && npm ci
+        continue-on-error: true
+
+      - name: Run tests
+        run: |
+          if [ -f apps/web/package.json ]; then
+            cd apps/web && npm test -- --run
+          else
+            echo "No frontend app yet (Phase 01 pending)"
+          fi
+        continue-on-error: true
+
+  # ─────────────────────────────────────────────
+  # TypeScript Type Sync Check (ADR-010, ADR-015)
+  # ─────────────────────────────────────────────
+  check-type-sync:
+    name: TypeScript Type Sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install type generation dependencies
+        run: |
+          if [ -f packages/shared_types/requirements.txt ]; then
+            pip install -r packages/shared_types/requirements.txt
+          fi
+        continue-on-error: true
+
+      - name: Generate TypeScript types
+        run: |
+          if [ -f packages/shared_types/generate_types.py ]; then
+            python packages/shared_types/generate_types.py
+          else
+            echo "Type generation not yet implemented (Phase 01 pending)"
+          fi
+        continue-on-error: true
+
+      - name: Check for type drift
+        run: |
+          if [ -d packages/shared_types/types ]; then
+            git diff --exit-code packages/shared_types/types/ || \
+              (echo "ERROR: TypeScript types are out of sync. Run 'make generate-types' locally and commit the result." && exit 1)
+          fi
+        continue-on-error: true  # Remove continue-on-error after Phase 01
+
+  # ─────────────────────────────────────────────
+  # Docker Compose Config Validation
+  # ─────────────────────────────────────────────
+  validate-compose:
+    name: Validate Docker Compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create minimal .env for config validation
+        run: |
+          echo "POSTGRES_PASSWORD=ci_validate_only" >> .env
+          echo "MINIO_ROOT_USER=ci_user" >> .env
+          echo "MINIO_ROOT_PASSWORD=ci_password_8chars" >> .env
+
+      - name: Validate docker-compose.yml
+        run: docker compose -f infra/docker-compose.yml config --quiet
+
+      - name: Validate docker-compose.gpu.yml
+        run: docker compose -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml config --quiet
+
+      - name: Validate docker-compose.prod.yml
+        run: docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml config --quiet

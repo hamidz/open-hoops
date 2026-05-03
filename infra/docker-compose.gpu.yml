@@ -1,0 +1,56 @@
+# Open Hoops — AMD ROCm GPU Acceleration Override
+# Use: docker compose -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
+#
+# Requirements:
+#   - WSL2 on Windows (Ubuntu 22.04+) or native Linux
+#   - AMD GPU with RDNA2/RDNA3 architecture
+#   - ROCm 5.7+ installed in the WSL2/Linux environment
+#   - amdgpu kernel driver loaded (verify: ls /dev/kfd /dev/dri)
+#
+# Verify ROCm is working: rocm-smi --showproductname
+# Verify Docker sees GPU: docker run --rm --device /dev/kfd --device /dev/dri rocm/pytorch python -c "import torch; print(torch.cuda.is_available())"
+
+version: "3.9"
+
+services:
+  cv_worker:
+    image: rocm/pytorch:rocm6.1_ubuntu22.04_py3.10_pytorch_2.1.2
+    # The cv_worker service uses the ROCm-enabled PyTorch base image instead of
+    # the standard Dockerfile. The ROCm image includes PyTorch compiled for AMD GPUs.
+    # Ultralytics YOLO detects ROCm/HIP automatically when torch.cuda.is_available() is True
+    # on ROCm builds.
+    devices:
+      - /dev/kfd         # AMD KFD device (Kernel Fusion Driver)
+      - /dev/dri         # DRI render nodes
+    group_add:
+      - video
+      - render
+    environment:
+      # RDNA3 (gfx1100) compatibility flag — may be required for newer RDNA3 cards
+      # until upstream ROCm fully supports them:
+      HSA_OVERRIDE_GFX_VERSION: ${HSA_OVERRIDE_GFX_VERSION:-}
+      # Use medium model when GPU available
+      YOLO_MODEL: ${YOLO_MODEL:-yolov8m.pt}
+      # Process every other frame when GPU is fast enough
+      FRAME_SAMPLE_RATE: ${FRAME_SAMPLE_RATE:-2}
+    deploy:
+      resources:
+        limits:
+          memory: 12g  # System RAM limit (VRAM is separate)
+
+  ollama:
+    image: ollama/ollama:rocm
+    # Use the ROCm-enabled Ollama image for AMD GPU LLM inference.
+    # With 32 GB VRAM, larger quantized models (llama3.1:70b-q4) may be feasible.
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add:
+      - video
+      - render
+    environment:
+      HSA_OVERRIDE_GFX_VERSION: ${HSA_OVERRIDE_GFX_VERSION:-}
+    deploy:
+      resources:
+        limits:
+          memory: 28g  # System RAM; VRAM usage is handled by ROCm
