@@ -75,34 +75,61 @@ Default MVP boundary:
 ## 6. Upload Safety Requirements
 
 - Accept only configured video extensions (`.mp4`, `.mov` for MVP).
+- **Validate MIME type using magic bytes, not just file extension.** Use the `python-filetype` library (`filetype.guess()`) to verify the file header before processing. A file renamed to `.mp4` with malicious content must be rejected.
 - Enforce max upload size before and during upload where possible.
 - Store uploads under UUID object keys, not raw filenames.
 - Extract frame zero using safe temporary paths and delete temporary files after use.
 - Treat media metadata as untrusted input.
 - Mark jobs failed with a clear error instead of crashing services.
 
+Accepted MIME types: `video/mp4`, `video/quicktime`. Reject all others with HTTP 415.
+
 ---
 
 ## 7. Artifact Access Requirements
 
 - The frontend must not receive MinIO root credentials.
-- API should either proxy artifacts or issue short-lived pre-signed URLs.
+- API should either proxy artifacts or issue short-lived pre-signed URLs (see expiry policy in `docs/API_CONTRACT.md` Section 13).
 - Signed URLs must not be logged.
 - Delete job must remove video, telemetry, debug frames, heatmaps, reports, and annotations for that job.
 
 ---
 
-## 8. LLM Safety Requirements
+## 8. CORS Policy
+
+CORS must be explicitly configured — even in local development. An unconfigured CORS policy will silently reject all cross-origin requests from the Next.js frontend (port 3000 → API port 8000).
+
+```
+Allowed origins:   ALLOWED_ORIGINS env var (default: http://localhost:3000)
+Allowed methods:   GET, POST, PUT, DELETE, OPTIONS
+Allow credentials: false
+```
+
+`ALLOWED_ORIGINS` must never be `*` even in development. Always specify the exact origin.
+
+---
+
+## 9. LLM Safety Requirements
 
 - MVP uses local Ollama only.
 - Prompt must instruct the model to use only provided analytics data.
+- **Player labels are user-controlled strings and must be sanitized before inclusion in prompts.** Strip or escape any content that could alter prompt interpretation (e.g., newlines, markdown code fences, instruction-like prefixes). Use Jinja2's `e` (escape) filter for all user-supplied strings rendered into prompt templates.
 - Report UI must show model name, generated timestamp, and confidence caveats.
 - If tracking coverage is low, the report must say the analysis may be unreliable.
 - If Ollama is unavailable, fail report generation gracefully.
 
+**Prompt injection mitigation example:**
+
+```jinja2
+{# DO NOT render player labels directly #}
+{% for player in players %}
+  Player {{ player.track_id }}: {{ player.label | e | truncate(50) }}
+{% endfor %}
+```
+
 ---
 
-## 9. Privacy Review Checklist
+## 10. Privacy Review Checklist
 
 Before release:
 
@@ -112,10 +139,14 @@ Before release:
 - [ ] Logs do not contain private filenames beyond necessary user-visible metadata.
 - [ ] Delete job removes all associated artifacts.
 - [ ] Quickstart explains that users are responsible for consent and lawful use of videos.
+- [ ] MIME type validation rejects non-video files.
+- [ ] CORS is configured with explicit origin list, not wildcard.
+- [ ] Signed URLs are not logged anywhere.
+- [ ] Prompt templates sanitize all user-supplied player labels.
 
 ---
 
-## 10. Post-MVP Security Work
+## 11. Post-MVP Security Work
 
 - Authentication and local user accounts if the app is exposed beyond localhost.
 - Role-based access control for team workspaces.

@@ -263,6 +263,121 @@ The MVP uses a single multipart HTTP POST for video uploads, with a 4 GB maximum
 
 ---
 
+## ADR-012 — ARQ as Task Queue (Celery Rejected)
+
+**Date:** 2026-05  
+**Status:** Accepted
+
+### Decision
+
+Use **ARQ** as the background task queue for all worker services (CV worker, analytics worker, LLM service). Celery is not used.
+
+### Rationale
+
+- ARQ is async-native (built on asyncio + Redis). FastAPI is fully async — ARQ integrates without a synchronous compatibility bridge.
+- ARQ uses Redis as both the broker and result backend with no extra configuration.
+- Celery's synchronous task model requires `gevent` or `eventlet` for async contexts, adding complexity.
+- ARQ's API is simpler: functions are job handlers, workers are a single `arq.Worker` class.
+- For a local single-node deployment with modest throughput, ARQ's simplicity is a feature.
+
+### Alternatives Considered
+
+- Celery: more feature-complete (beat scheduler, chord, group primitives), but heavy and synchronous by default. Post-MVP if complex scheduling is needed.
+- Dramatiq: similar to Celery, synchronous model. Rejected for same reasons.
+- Direct Redis pub/sub: too low-level; no retry, result tracking, or dead-letter queue.
+
+---
+
+## ADR-013 — API Base Path Versioned at /api/v1/
+
+**Date:** 2026-05  
+**Status:** Accepted
+
+### Decision
+
+All FastAPI routes use the base path `/api/v1/`. The unversioned `/api/` path is not used.
+
+### Rationale
+
+- Adding a version prefix later is a breaking change requiring frontend updates across every API call.
+- Starting with `/api/v1/` is zero cost and future-proofs the contract.
+- When authentication or multi-user support is added (post-MVP), it may require a `/api/v2/` breaking change — versioning makes this clean.
+- FastAPI supports `APIRouter` with a prefix, making this a one-line change in `main.py`.
+
+### Alternatives Considered
+
+- Unversioned `/api/`: simpler but creates a migration debt.
+- Header-based versioning: non-standard, harder to document and debug.
+
+---
+
+## ADR-014 — TanStack Query for Server State, Zustand for UI State
+
+**Date:** 2026-05  
+**Status:** Accepted
+
+### Decision
+
+The Next.js frontend uses **TanStack Query (React Query v5)** for all server state management and **Zustand** for local client-only UI state.
+
+### Rationale
+
+**TanStack Query:**
+- Job status polling with `refetchInterval` is built-in — no manual `useEffect` timers.
+- Stale-while-revalidate, background refetch on window focus, automatic retry — all needed for a job-status-heavy UI.
+- Deduplicates concurrent identical requests (e.g., multiple components reading the same job).
+- Provides loading, error, and success states per query with a standard API.
+
+**Zustand:**
+- Calibration points in-progress (draggable markers) require low-latency state updates that React Context would re-render too broadly.
+- Active dashboard tab, selected player filter, and heatmap opacity are UI-only and not needed in server state.
+- Zustand is 1 KB, no provider required, and trivially colocated with components.
+
+### Alternatives Considered
+
+- SWR: similar to TanStack Query, less feature-rich (no polling control, simpler cache).
+- Redux: overkill for this use case, no built-in async query patterns.
+- Context + useReducer: verbose for async state, re-render performance issues.
+- Jotai: comparable to Zustand, slightly more atomic but less ergonomic for this pattern.
+
+---
+
+## ADR-015 — shadcn/ui as Component System, Turborepo for Monorepo Tasks, Lucide for Icons
+
+**Date:** 2026-05  
+**Status:** Accepted
+
+### Decision
+
+The frontend uses **shadcn/ui** (Radix UI + Tailwind) as the base component system, **Turborepo** as the monorepo task runner, and **Lucide React** for icons.
+
+### Rationale
+
+**shadcn/ui:**
+- Components are source-copied into the project (not a black-box npm package), allowing full customization without fighting library internals.
+- Built on Radix UI primitives which are headless and fully accessible (ARIA correct out of the box).
+- Designed for Tailwind CSS and Next.js App Router — zero configuration friction.
+- Active development, large community, de facto standard for Next.js + Tailwind projects.
+
+**Turborepo:**
+- The monorepo has `apps/web` (TypeScript/Node) and `packages/shared_types` (Python + TypeScript). Tasks need to run in dependency order: `shared_types` types must generate before `web` builds.
+- Turborepo's `turbo.json` pipeline defines this graph; `turbo run build` runs it correctly in parallel where safe.
+- Remote caching available for CI speedup (optional).
+
+**Lucide React:**
+- shadcn/ui uses Lucide as its default icon library — consistent by default.
+- Tree-shakeable, TypeScript-typed, MIT licensed.
+
+### Alternatives Considered
+
+- Chakra UI: runtime CSS-in-JS performance overhead, fights Tailwind.
+- MUI: opinionated styles, complex Tailwind integration.
+- Heroicons: fewer icons, not used natively by shadcn.
+- Nx: more powerful than Turborepo but heavy for this project size.
+- npm workspaces only: no caching, no task ordering.
+
+---
+
 ## How To Add a New ADR
 
 Copy this template:
@@ -285,3 +400,4 @@ Copy this template:
 
 - [Alternative]: [why rejected or deferred].
 ```
+

@@ -14,6 +14,44 @@
 
 ---
 
+## Windows Users: WSL2 Required
+
+All development tooling (Makefile, bash scripts, Docker GPU support) requires a Linux environment. **Windows users must use WSL2.**
+
+### WSL2 Setup
+
+```powershell
+# In PowerShell (Administrator)
+wsl --install -d Ubuntu-22.04
+wsl --set-default-version 2
+```
+
+After WSL2 is installed, all subsequent commands are run **inside the WSL2 Ubuntu terminal**, not in PowerShell or CMD.
+
+### Docker Desktop WSL2 Backend
+
+In Docker Desktop Settings → General, enable **"Use the WSL 2 based engine"**. In Settings → Resources → WSL Integration, enable integration for your Ubuntu-22.04 distro.
+
+### AMD GPU (ROCm) in WSL2
+
+If you have an AMD GPU and want hardware acceleration for the CV worker:
+
+```bash
+# In WSL2 Ubuntu terminal — verify ROCm sees the GPU
+rocm-smi --showproductname
+
+# Run with GPU override
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
+```
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) Section 9 and [docs/QUICKSTART.md](./docs/QUICKSTART.md) for the full setup walkthrough.
+
+### Windows-Specific Docker Volume Performance
+
+Docker bind mounts from Windows filesystems (`/mnt/c/...`) into Linux containers are slow. **Clone the repository inside WSL2's Linux filesystem** (e.g. `~/open-hoops`), not on the Windows filesystem (`/mnt/c/Users/...`). This is critical for video processing performance.
+
+---
+
 ## Development Environment
 
 ### Prerequisites
@@ -25,27 +63,36 @@
 | Python | 3.11+ | Backend services |
 | Node.js | 20+ | Next.js frontend |
 | Git | 2.40+ | Version control |
+| WSL2 (Windows only) | Ubuntu 22.04+ | Required Linux environment for Windows |
 
-**Optional (for GPU acceleration):**
+**Optional (for AMD ROCm GPU acceleration — confirmed hardware path):**
+- AMD GPU (RDNA2/RDNA3 architecture)
+- ROCm 5.7+ installed in WSL2
+- `amdgpu` driver loaded in WSL2 kernel
+
+**Optional (for NVIDIA CUDA GPU acceleration):**
 - NVIDIA GPU with CUDA 11.8+
 - `nvidia-container-toolkit` — [Install guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
 
 ### Quick Setup
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/hamidz/open-hoops.git
-cd open-hoops
+# 1. Clone the repository INSIDE WSL2 Linux filesystem (not /mnt/c/...)
+git clone https://github.com/hamidz/open-hoops.git ~/open-hoops
+cd ~/open-hoops
 
 # 2. Run the interactive setup script (copies .env, pulls models, creates MinIO buckets)
 ./scripts/setup.sh
 
-# 3. Start the full dev stack
+# 3. Start the full dev stack (CPU mode)
 docker compose -f infra/docker-compose.yml up -d
+
+# 3a. Start with AMD ROCm GPU acceleration (WSL2 only)
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
 
 # 4. Verify all services are healthy
 ./scripts/check_health.sh
-# Or: curl http://localhost:8000/health
+# Or: curl http://localhost:8000/api/v1/health
 ```
 
 ### Running Without Docker (for active development)

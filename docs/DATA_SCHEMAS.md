@@ -170,7 +170,7 @@ Defined by: `packages/shared_types/models/analytics.py`.
 
 **Field notes:**
 - `annotations_applied`: `true` if this summary was computed after Phase 11 annotations were saved.
-- `team` in player record: defaults to `"home"` for odd track_ids, `"away"` for even track_ids when no annotations exist.
+- `team` in player record: `null` until the user assigns teams via the annotation panel (Phase 11). **Do not infer teams from track_id.** ByteTrack assigns track_ids incrementally as objects first appear and they will not reliably alternate between teams. Team assignment requires either jersey color clustering (Phase 05) or manual annotation (Phase 11). Defaulting to track_id parity would produce incorrect and misleading analytics.
 - Zone distribution values sum to 1.0 per player.
 
 ---
