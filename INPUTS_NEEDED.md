@@ -68,6 +68,20 @@
 | GPU available | Optional — CPU fallback required | [ ] |
 | GPU (if present) | NVIDIA CUDA or Apple MPS | [ ] |
 | Target deployment | Local self-hosted, Docker Compose | [ ] |
+| Available disk space | 50 GB minimum recommended | [ ] |
+| nvidia-container-toolkit installed (if NVIDIA GPU) | TBD | [ ] |
+
+### Processing Time Expectations
+
+At the default CPU settings (YOLOv8n, 1x concurrency, every 3rd frame), processing is approximately **3–5× slower than real time**. Example estimates:
+
+| Video Duration | Estimated CPU Processing Time |
+|---|---|
+| 10 minutes | ~30–50 minutes |
+| 1 hour | ~3–5 hours |
+| 2 hours | ~6–10 hours |
+
+With an NVIDIA GPU (CUDA), processing is typically **10–20× faster** than CPU. A 1-hour game processes in ~15–30 minutes.
 
 **Owner notes:**
 
@@ -96,8 +110,8 @@
 | Question | Default Assumption | Owner Confirmed? |
 |---|---|---|
 | Sample video available for testing | TBD | [ ] |
-| If no real video, use synthetic mock data | Yes | [ ] |
-| Sample video resolution confirmed | TBD | [ ] |
+| If no real video, use synthetic mock data | Yes — `scripts/generate_mock_data.py` | [ ] |
+| Sample video resolution confirmed | TBD (1080p assumed) | [ ] |
 
 **Owner notes / sample video link:**
 
@@ -113,6 +127,8 @@ List any items that are still unresolved or require more research:
 2. _Which tracker to default to (ByteTrack vs BoT-SORT)?_
 3. _Is Ollama pre-installed on the target dev machine?_
 4. _Will real court line detection be attempted in MVP or always manual calibration?_
+5. _Is a chunked/resumable upload required for MVP, or is a single-POST upload acceptable for ≤ 4 GB files on a local network?_
+6. _Is GPU acceleration available on the primary development machine?_
 
 ---
 

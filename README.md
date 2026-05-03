@@ -38,6 +38,7 @@ Upload a fixed sideline basketball video, manually calibrate the court, process 
 - [PROJECT_PLAN.md](./PROJECT_PLAN.md)
 - [AGENTIC_EXECUTION_PLAN.md](./AGENTIC_EXECUTION_PLAN.md)
 - [INPUTS_NEEDED.md](./INPUTS_NEEDED.md)
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
 - [docs/README.md](./docs/README.md)
 
 ## Repository Intent

@@ -63,6 +63,7 @@ Enqueue analytics job (Phase 09)
   - Handles graceful shutdown on SIGTERM.
 - [ ] Job processing is idempotent — re-processing a job overwrites previous output.
 - [ ] Worker updates job status at each pipeline step.
+- [ ] **Worker updates `progress_pct` on the job record every 100 frames** using the formula `(frames_processed / total_sampled_frames) * 100`. This feeds the frontend progress bar.
 
 ### Frame Extraction
 
@@ -141,6 +142,13 @@ Enqueue analytics job (Phase 09)
 - [ ] Frame processing: target ≥ 5 frames/second on CPU (no GPU).
 - [ ] Memory: release frame tensors after detection to avoid OOM.
 - [ ] Log processing rate every 100 frames.
+
+### Tracker Evaluation (ADR-009 Confirmation)
+
+- [ ] **Run a side-by-side comparison of ByteTrack vs BoT-SORT on the Phase 05 test clip.**
+  - Compare: track ID stability, id-switch count, processing speed (frames/sec).
+  - Record results in a short note added to `docs/ADR.md` ADR-009.
+  - Update ADR-009 status from `Provisional` to `Accepted` with the confirmed default tracker.
 
 ### Configuration (via env vars)
 

@@ -1,0 +1,93 @@
+name: "Copilot Setup Steps"
+
+# Run automatically when this file changes (for validation), and allow manual runs.
+on:
+    workflow_dispatch:
+    push:
+        paths:
+            - .github/workflows/copilot-setup-steps.yml
+    pull_request:
+        paths:
+            - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+    # This job MUST be named `copilot-setup-steps` to be picked up by the Copilot agent.
+    copilot-setup-steps:
+        runs-on: ubuntu-latest
+
+        permissions:
+            contents: read
+
+        steps:
+            # ── Checkout ────────────────────────────────────────────────────────────
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            # ── Python ──────────────────────────────────────────────────────────────
+            - name: Set up Python 3.11
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+                  cache: "pip"
+
+            # ── Node.js ─────────────────────────────────────────────────────────────
+            - name: Set up Node.js 20
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            # ── System dependencies (OpenCV + headless rendering) ────────────────────
+            # Required by cv2 and any headless image/video processing in the CV worker.
+            - name: Install system dependencies for OpenCV
+              run: |
+                  sudo apt-get update -qq
+                  sudo apt-get install -y --no-install-recommends \
+                      libgl1-mesa-glx \
+                      libglib2.0-0 \
+                      libsm6 \
+                      libxext6 \
+                      libxrender-dev \
+                      ffmpeg
+
+            # ── Python tooling ──────────────────────────────────────────────────────
+            # Install the core developer tools used across all Python services.
+            - name: Install Python developer tooling
+              run: |
+                  pip install --upgrade pip
+                  pip install \
+                      ruff \
+                      mypy \
+                      pytest \
+                      pytest-asyncio \
+                      pytest-cov \
+                      pre-commit
+
+            # ── Python service dependencies (API + workers) ──────────────────────────
+            # Install all Python service requirements so agents can run tests immediately.
+            - name: Install Python service dependencies
+              run: |
+                  # Install from each service requirements file if it exists.
+                  for req in \
+                      apps/api/requirements.txt \
+                      apps/api/requirements-dev.txt \
+                      services/cv_worker/requirements.txt \
+                      services/analytics_worker/requirements.txt \
+                      services/llm_service/requirements.txt; do
+                      if [ -f "$req" ]; then
+                          echo "Installing $req"
+                          pip install -r "$req"
+                      fi
+                  done
+
+            # ── Frontend dependencies ────────────────────────────────────────────────
+            - name: Install frontend dependencies
+              run: |
+                  if [ -f apps/web/package.json ]; then
+                      cd apps/web
+                      npm ci
+                  fi
+
+            # ── Docker Compose (validation only) ────────────────────────────────────
+            # Ensure docker compose is available for config validation tasks.
+            - name: Verify Docker Compose is available
+              run: docker compose version
