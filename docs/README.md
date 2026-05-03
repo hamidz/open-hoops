@@ -20,6 +20,12 @@
 
 | Document | Purpose |
 |---|---|
+| [docs/PRODUCT_REQUIREMENTS.md](./PRODUCT_REQUIREMENTS.md) | MVP requirements, acceptance criteria, users, and review gates |
+| [docs/API_CONTRACT.md](./API_CONTRACT.md) | REST API contract, error shape, and job state transitions |
+| [docs/UX_FLOWS.md](./UX_FLOWS.md) | User journeys, screen inventory, and UX diagrams |
+| [docs/SECURITY_PRIVACY.md](./SECURITY_PRIVACY.md) | Security, privacy, threat model, and local data-handling requirements |
+| [docs/TESTING_STRATEGY.md](./TESTING_STRATEGY.md) | Cross-phase testing strategy, release gates, and validation requirements |
+| [docs/PLANNING_GAP_REVIEW.md](./PLANNING_GAP_REVIEW.md) | Planning review summary and remaining owner decisions |
 | [docs/STACK.md](./STACK.md) | Technology choices with rationale |
 | [docs/GLOSSARY.md](./GLOSSARY.md) | Domain terms and definitions |
 | [docs/ADR.md](./ADR.md) | Architecture Decision Records |
@@ -50,7 +56,8 @@
 ## How To Navigate This Repo
 
 1. **Starting fresh?** Read `README.md` → `PROJECT_PLAN.md` → `INPUTS_NEEDED.md`.
-2. **About to implement?** Read `ARCHITECTURE.md` → phase doc for your current phase.
-3. **Running an agent?** Use the agent prompt template in `AGENTIC_EXECUTION_PLAN.md`.
-4. **Looking up a term?** See `docs/GLOSSARY.md`.
-5. **Wondering why we chose X?** See `docs/ADR.md`.
+2. **Confirming scope?** Read `docs/PRODUCT_REQUIREMENTS.md` → `docs/PLANNING_GAP_REVIEW.md`.
+3. **About to implement?** Read `ARCHITECTURE.md` → `docs/API_CONTRACT.md` → `docs/DATA_SCHEMAS.md` → phase doc for your current phase.
+4. **Running an agent?** Use the agent prompt template in `AGENTIC_EXECUTION_PLAN.md`.
+5. **Looking up a term?** See `docs/GLOSSARY.md`.
+6. **Wondering why we chose X?** See `docs/ADR.md`.

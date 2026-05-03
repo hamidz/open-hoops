@@ -45,6 +45,7 @@ Stored in the `calibration_json` field of the Job record.
 
 ```json
 {
+  "schema_version": "1.0",
   "points": [
     { "pixel": [452, 312], "court": [0, 0] },
     { "pixel": [1201, 308], "court": [0, 15.24] },
@@ -182,6 +183,7 @@ Defined by: `packages/shared_types/models/annotation.py`.
 
 ```json
 {
+  "schema_version": "1.0",
   "job_id": "uuid",
   "updated_at": "ISO8601",
   "team_colors": {
@@ -222,6 +224,7 @@ Stored in MinIO at `artifacts/{job_id}/coaching_report.json`.
 
 ```json
 {
+  "schema_version": "1.0",
   "job_id": "uuid",
   "model": "llama3",
   "generated_at": "ISO8601",
@@ -262,5 +265,5 @@ Three-point arc radius: **7.24 m** from the basket. Basket positions: `[1.575, 7
 
 - **Minor version bump (1.0 → 1.1):** additive change (new optional field). Old clients can ignore the new field. No re-processing required.
 - **Major version bump (1.x → 2.0):** breaking change (field rename, type change, removal). Existing jobs processed under v1.x are not automatically migrated. A migration script must be provided.
-- **Version field:** all documents that are stored as files (telemetry, analytics summary, coaching report) include `"schema_version"`. The Job record in PostgreSQL is migrated via Alembic.
+- **Version field:** all documents that are stored as files (telemetry, calibration, analytics summary, annotations, coaching report) include `"schema_version"`. The Job record in PostgreSQL is migrated via Alembic.
 - **TypeScript types** are auto-generated from Pydantic models (see `docs/ADR.md` ADR-010). Run `make generate-types` after any schema change.

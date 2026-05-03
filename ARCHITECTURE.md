@@ -191,6 +191,8 @@ All subsequent detections mapped to court coordinates
 
 ## 5. Key Data Schemas
 
+This section summarizes the most important shapes for architecture discussion. The canonical schema reference is [`docs/DATA_SCHEMAS.md`](./docs/DATA_SCHEMAS.md); implementation and tests must follow that file if examples differ.
+
 ### 5.1 Job Record
 
 ```json
@@ -215,15 +217,17 @@ All subsequent detections mapped to court coordinates
 
 ```json
 {
-  "frame": 0,
+  "frame_index": 0,
   "timestamp_ms": 0,
   "detections": [
     {
       "track_id": 1,
-      "class": "person | ball",
+      "object_class": "person | ball",
       "bbox_px": [x1, y1, x2, y2],
       "confidence": 0.92,
-      "court_xy": [x_meters, y_meters]
+      "court_xy_m": [x_meters, y_meters],
+      "team": null,
+      "label": null
     }
   ]
 }
@@ -269,6 +273,7 @@ While the MVP is video-only, the architecture is designed to be sensor-agnostic 
 - The API should not expose raw video URLs publicly — all access via signed URLs or proxy.
 - Ollama runs fully locally — no data sent to external LLM providers.
 - `.env` files are gitignored. A `.env.example` is provided for each service.
+- See [`docs/SECURITY_PRIVACY.md`](./docs/SECURITY_PRIVACY.md) for the full threat model, privacy checklist, and data-handling requirements.
 
 ---
 
@@ -281,10 +286,9 @@ These decisions are intentionally deferred to the relevant phase:
 | Celery vs ARQ for task queue | Phase 02 |
 | ByteTrack vs BoT-SORT default | Phase 05 |
 | YOLOv8n vs YOLOv8m default weight | Phase 05 |
-| Court line auto-detection vs always manual | Phase 06 |
 | PostgreSQL schema migrations tool (Alembic vs raw) | Phase 01 |
-| TypeScript / Pydantic type sync strategy (manual vs code-gen) | Phase 07 |
-| Chunked/resumable upload vs single-POST (tus.io vs multipart) | Phase 04 |
+
+Decisions already accepted in `docs/ADR.md` include local-first operation, manual court calibration for MVP, generated TypeScript types from Pydantic models, and single-POST uploads for MVP.
 
 ---
 

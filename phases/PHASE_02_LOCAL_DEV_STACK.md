@@ -62,7 +62,7 @@ Your job is to implement `infra/docker-compose.yml` and all service Dockerfiles 
 
 - [ ] Create initial DB schema migration (Alembic):
   - `jobs` table: `job_id` (UUID PK), `status`, `video_url`, `created_at`, `updated_at`
-  - Additional columns: `calibration_json`, `telemetry_url`, `analytics_url`, `report_url`
+  - Additional columns: `calibration_json`, `telemetry_url`, `analytics_summary_url`, `report_url`
 - [ ] Alembic `env.py` reads `DATABASE_URL` from environment.
 
 ### MinIO

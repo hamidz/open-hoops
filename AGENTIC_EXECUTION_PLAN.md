@@ -86,7 +86,7 @@ Owner confirms → next phase
 
 ---
 
-## 4. Phase Index
+## 4. Recommended Phase Execution Order
 
 | Phase | Name | Status |
 |---|---|---|
@@ -104,7 +104,7 @@ Owner confirms → next phase
 | 10 | [Local LLM Reports](./phases/PHASE_10_LOCAL_LLM_REPORTS.md) | 🔲 Pending |
 | 12 | [Self-Hosted Release](./phases/PHASE_12_RELEASE.md) | 🔲 Pending |
 
-> **⚠️ Phase Order Note:** Phase 11 (Annotation) is listed before Phase 10 (LLM Reports) intentionally. Team assignment and player labeling from Phase 11 are required inputs for the analytics that feed the LLM report. Running Phase 10 before Phase 11 will produce a report based on the fallback team assignment (odd/even track IDs) rather than real team data. Implementing Phase 11 first eliminates this inaccuracy. File names retain their original numbering.
+> **⚠️ Phase Order Note:** Phase 11 (Annotation) is listed before Phase 10 (LLM Reports) intentionally. Phase 10 can run from Phase 09 fallback team assignments, but Phase 11 annotations produce higher-quality analytics and reports. File names retain their original numbering.
 
 Update status to `🟡 In Progress` or `✅ Done` as each phase completes.
 

@@ -36,6 +36,8 @@ Upload a fixed sideline basketball video, manually calibrate the court, process 
 ## Start Here
 
 - [PROJECT_PLAN.md](./PROJECT_PLAN.md)
+- [docs/PRODUCT_REQUIREMENTS.md](./docs/PRODUCT_REQUIREMENTS.md)
+- [docs/PLANNING_GAP_REVIEW.md](./docs/PLANNING_GAP_REVIEW.md)
 - [AGENTIC_EXECUTION_PLAN.md](./AGENTIC_EXECUTION_PLAN.md)
 - [INPUTS_NEEDED.md](./INPUTS_NEEDED.md)
 - [CONTRIBUTING.md](./CONTRIBUTING.md)
@@ -45,3 +47,5 @@ Upload a fixed sideline basketball video, manually calibrate the court, process 
 
 This repo currently contains planning, execution, and documentation scaffolding only.
 Implementation should begin only after the owner confirms the key inputs in `INPUTS_NEEDED.md`.
+
+Before coding begins, the owner should also review the product requirements, UX flows, API contract, security/privacy checklist, and testing strategy listed in `docs/README.md`.

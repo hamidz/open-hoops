@@ -89,6 +89,8 @@ Not MVP:
 
 ## 7. Major Phases
 
+The phase numbers describe file names and logical capability groups. The recommended execution order may differ where a later-numbered phase improves the quality of an earlier-numbered output; see `AGENTIC_EXECUTION_PLAN.md`.
+
 ### Phase 00 — Discovery
 - confirm project inputs
 - confirm MVP constraints
@@ -187,6 +189,8 @@ Planning stage is complete when:
 ## 11. Inputs Needed From Owner
 
 See [INPUTS_NEEDED.md](./INPUTS_NEEDED.md).
+
+For the complete MVP requirements, owner review gates, and acceptance criteria, see [docs/PRODUCT_REQUIREMENTS.md](./docs/PRODUCT_REQUIREMENTS.md).
 
 ---
 
