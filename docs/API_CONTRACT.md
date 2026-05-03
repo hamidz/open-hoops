@@ -102,6 +102,7 @@ Success response (`201`):
 
 State notes:
 
+- First-workflow MVP behavior: until the CV worker is fully implemented, accepted uploads are stored locally and completed with deterministic generated analytics so users can validate the end-to-end UI.
 - Upload validation failure returns `400`, `413`, or `415`.
 - MinIO upload failure returns no job record.
 - Redis enqueue failure creates the job as `failed` with `error_message` populated.
