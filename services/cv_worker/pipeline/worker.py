@@ -4,11 +4,11 @@ import asyncio
 
 
 async def noop(ctx: object | None = None) -> None:
-    return None
+    pass
 
 
 async def process_video(ctx: object | None, job_id: str) -> None:
-    return None
+    pass
 
 
 class WorkerSettings:
