@@ -7,6 +7,11 @@ RUN npm ci
 
 FROM node:20-alpine AS builder
 WORKDIR /repo
+# NEXT_PUBLIC_* variables are inlined at build time, not runtime.
+# Pass the public API URL as a build argument so it is baked into the bundle.
+# docker build --build-arg NEXT_PUBLIC_API_URL=http://your-host:8000 ...
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /repo/node_modules ./node_modules
 COPY . .

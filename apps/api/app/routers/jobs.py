@@ -1,6 +1,7 @@
+import re
 from typing import Annotated
 
-from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, Query, Response, UploadFile, status
 
 from app.models import AnalyticsSummary, Job, UploadResponse
 from app.services.analytics import generate_first_workflow_stats
@@ -9,9 +10,21 @@ from app.services.uploads import create_upload_job
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
 RETRY_STARTED_PROGRESS = 50
+_LIST_JOBS_MAX = 200
+_UUID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE
+)
+
+
+def _validate_job_id(job_id: str) -> None:
+    if not _UUID_RE.match(job_id):
+        raise HTTPException(
+            status_code=400, detail={"error": "invalid_id", "detail": "job_id must be a UUID."}
+        )
 
 
 def _job_or_404(job_id: str) -> Job:
+    _validate_job_id(job_id)
     job = store.get_job(job_id)
     if job is None:
         raise HTTPException(
@@ -22,7 +35,10 @@ def _job_or_404(job_id: str) -> Job:
 
 
 @router.get("", response_model=list[Job])
-def list_jobs(limit: int = 50, offset: int = 0) -> list[Job]:
+def list_jobs(
+    limit: Annotated[int, Query(ge=1, le=_LIST_JOBS_MAX)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> list[Job]:
     return store.list_jobs()[offset : offset + limit]
 
 
