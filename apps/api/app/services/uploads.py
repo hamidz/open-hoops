@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 from base64 import b64decode
 from pathlib import Path
 from uuid import uuid4
@@ -13,7 +12,6 @@ from app.services.analytics import generate_first_workflow_stats
 from app.services.store import store
 
 ALLOWED_EXTENSIONS = {".mp4", ".mov"}
-_CHUNK_SIZE = 1024 * 1024  # 1 MiB — keeps RAM flat regardless of video size
 # Minimal valid 1x1 JPEG until Phase 06 extracts a real frame-zero image.
 PLACEHOLDER_JPEG = b64decode(
     "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAH/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAEFAqf/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/ASP/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/ASP/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAY/Al//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/IV//2gAMAwEAAgADAAAAEP/EABQRAQAAAAAAAAAAAAAAAAAAABD/2gAIAQMBAT8QP//EABQRAQAAAAAAAAAAAAAAAAAAABD/2gAIAQIBAT8QP//EABQQAQAAAAAAAAAAAAAAAAAAABD/2gAIAQEAAT8QP//Z"
@@ -29,7 +27,7 @@ def validate_upload(filename: str, size: int) -> None:
         )
     if size > settings.max_upload_size_bytes:
         raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail={
                 "error": "file_too_large",
                 "detail": "Video exceeds the configured upload limit.",
@@ -46,37 +44,11 @@ async def create_upload_job(video: UploadFile, label: str | None, sport: str) ->
     job_id = str(uuid4())
     suffix = Path(original_filename).suffix.lower()
     created_at = store.now()
-    video_dir = store.videos_dir / job_id
-    video_dir.mkdir(parents=True, exist_ok=True)
-    video_path = video_dir / f"video{suffix}"
-
     try:
-        # Stream directly to disk in 1 MiB chunks — avoids loading the entire video
-        # into process RAM (critical for files up to the 4 GB upload limit).
-        file_size = 0
-        with video_path.open("wb") as fp:
-            while True:
-                chunk = await video.read(_CHUNK_SIZE)
-                if not chunk:
-                    break
-                file_size += len(chunk)
-                if file_size > settings.max_upload_size_bytes:
-                    raise HTTPException(
-                        status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-                        detail={
-                            "error": "file_too_large",
-                            "detail": "Video exceeds the configured upload limit.",
-                        },
-                    )
-                fp.write(chunk)
-
-        artifact_dir = store.artifacts_dir / job_id
-        artifact_dir.mkdir(parents=True, exist_ok=True)
-        frame_path = artifact_dir / "frame_0.jpg"
-        frame_path.write_bytes(PLACEHOLDER_JPEG)
-
+        file_size, video_url = await store.save_upload(video, job_id, suffix)
+        frame_zero_url = store.save_frame_zero(job_id, PLACEHOLDER_JPEG)
         summary = generate_first_workflow_stats(job_id, file_size)
-        store.save_analytics(summary)
+        analytics_summary_url = store.save_analytics(summary)
 
         job = Job(
             job_id=job_id,
@@ -86,17 +58,15 @@ async def create_upload_job(video: UploadFile, label: str | None, sport: str) ->
             sport=sport,
             original_filename=original_filename,
             file_size_bytes=file_size,
-            video_url=f"file://{video_path}",
-            frame_zero_url=f"file://{frame_path}",
-            analytics_summary_url=f"file://{store.analytics_path(job_id)}",
+            video_url=video_url,
+            frame_zero_url=frame_zero_url,
+            analytics_summary_url=analytics_summary_url,
             created_at=created_at,
             updated_at=store.now(),
         )
         store.save_job(job)
     except Exception:
         # Clean up any partially-created directories so failed uploads don't leave debris.
-        shutil.rmtree(video_dir, ignore_errors=True)
-        shutil.rmtree(store.artifacts_dir / job_id, ignore_errors=True)
+        store.delete_job(job_id)
         raise
-
     return job

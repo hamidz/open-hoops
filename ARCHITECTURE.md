@@ -2,6 +2,8 @@
 
 > System architecture reference for the Open Hoops basketball analytics platform.
 > Agents must read this file before implementing any phase.
+>
+> **Implementation note:** this document describes the target local-first architecture. The current first-workflow MVP still persists jobs and analytics to local JSON/filesystem storage in the API while PostgreSQL + MinIO remain the next storage phase, not the current runtime path.
 
 ---
 
