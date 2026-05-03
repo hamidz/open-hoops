@@ -15,13 +15,13 @@
 
 | Question | Default Assumption | Owner Confirmed? |
 |---|---|---|
-| Camera angle | Fixed sideline, full-court view | [ ] |
+| Camera angle | Fixed sideline, full-court view |  4k phone for now |
 | Camera motion | Static (no pan/tilt/zoom) | [ ] |
 | Video resolution | 1080p minimum | [ ] |
 | Frame rate | 30 fps minimum | [ ] |
 | File formats accepted | MP4, MOV | [ ] |
 | Video duration range | 5 min – 2 hrs | [ ] |
-| Single camera only for MVP | Yes | [ ] |
+| Single camera only for MVP | Yes | yes |
 
 **Owner notes:**
 
@@ -33,10 +33,10 @@
 
 | Question | Default Assumption | Owner Confirmed? |
 |---|---|---|
-| Court type | Full NBA/FIBA half-court or full-court | [ ] |
-| Court markings visible | Yes, standard painted lines | [ ] |
-| Calibration method | Manual point-click (4 corners minimum) | [ ] |
-| Court dimensions stored | Standard NBA (28.65 m × 15.24 m) | [ ] |
+| Court type | Full NBA/FIBA half-court or full-court | yes, full cort or half |
+| Court markings visible | Yes, standard painted lines | yes |
+| Calibration method | Manual point-click (4 corners minimum) | unsure |
+| Court dimensions stored | Standard NBA (28.65 m × 15.24 m) | nba or fiba |
 
 **Owner notes:**
 
@@ -49,9 +49,9 @@
 | Question | Default Assumption | Owner Confirmed? |
 |---|---|---|
 | Number of players tracked | Up to 10 (5v5) | [ ] |
-| Player identity method for MVP | Jersey color clustering, manual labeling | [ ] |
-| Team jersey colors needed up front | No — assigned post-detection | [ ] |
-| Ball tracking required for MVP | Best-effort, graceful failure acceptable | [ ] |
+| Player identity method for MVP | Jersey color clustering, manual labeling | yes, 10 or any number (practice) |
+| Team jersey colors needed up front | No — assigned post-detection | yes |
+| Ball tracking required for MVP | Best-effort, graceful failure acceptable | ok |
 
 **Owner notes:**
 
@@ -63,13 +63,13 @@
 
 | Question | Default Assumption | Owner Confirmed? |
 |---|---|---|
-| Development machine OS | macOS or Linux | [ ] |
-| Minimum RAM | 16 GB | [ ] |
-| GPU available | Optional — CPU fallback required | [ ] |
+| Development machine OS | macOS or Linux | windows |
+| Minimum RAM | 16 GB | 64gb |
+| GPU available | Optional — CPU fallback required | amd r9700 AI with 32gb of vram |
 | GPU (if present) | NVIDIA CUDA or Apple MPS | [ ] |
-| Target deployment | Local self-hosted, Docker Compose | [ ] |
-| Available disk space | 50 GB minimum recommended | [ ] |
-| nvidia-container-toolkit installed (if NVIDIA GPU) | TBD | [ ] |
+| Target deployment | Local self-hosted, Docker Compose | initially local |
+| Available disk space | 50 GB minimum recommended | 500gb |
+| nvidia-container-toolkit installed (if NVIDIA GPU) | TBD | na |
 
 ### Processing Time Expectations
 
@@ -123,7 +123,7 @@ With an NVIDIA GPU (CUDA), processing is typically **10–20× faster** than CPU
 
 List any items that are still unresolved or require more research:
 
-1. _Which YOLO model weight to default to (YOLOv8n vs YOLOv8m)?_
+1. _Which YOLO model weight to default to (YOLOv8n vs YOLOv8m)? use best software that my hardware can support same for ther questions
 2. _Which tracker to default to (ByteTrack vs BoT-SORT)?_
 3. _Is Ollama pre-installed on the target dev machine?_
 4. _Will real court line detection be attempted in MVP or always manual calibration?_
