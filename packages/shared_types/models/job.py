@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import StrEnum
-from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -14,7 +13,7 @@ class JobStatus(StrEnum):
 
 
 class Job(BaseModel):
-    job_id: UUID
+    job_id: str
     status: JobStatus
     progress_pct: int = Field(ge=0, le=100)
     label: str | None = None

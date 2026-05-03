@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from pydantic import BaseModel
 
 
@@ -21,6 +19,6 @@ class TelemetryFrame(BaseModel):
 
 class TelemetryDocument(BaseModel):
     schema_version: str = "1.0"
-    job_id: UUID
+    job_id: str
     sport: str = "basketball"
     frames: list[TelemetryFrame]

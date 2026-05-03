@@ -1,5 +1,4 @@
 from datetime import datetime
-from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -23,7 +22,7 @@ class PlayerAnalytics(BaseModel):
 
 class AnalyticsSummary(BaseModel):
     schema_version: str = "1.0"
-    job_id: UUID
+    job_id: str
     computed_at: datetime
     annotations_applied: bool = False
     duration_seconds: int

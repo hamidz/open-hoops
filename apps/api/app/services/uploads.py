@@ -61,7 +61,7 @@ async def create_upload_job(video: UploadFile, label: str | None, sport: str) ->
         status="complete",
         progress_pct=100,
         label=label if label is not None else Path(original_filename).stem,
-        sport=sport or "basketball",
+        sport=sport,
         original_filename=original_filename,
         file_size_bytes=len(content),
         video_url=f"file://{video_path}",

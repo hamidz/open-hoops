@@ -1,6 +1,10 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.requests import Request
+from starlette.responses import Response
 
 from app.config import settings
 from app.routers import health, jobs
@@ -18,9 +22,9 @@ app.include_router(jobs.router)
 
 
 @app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    if getattr(exc, "status_code", None):
-        raise exc
+async def unhandled_exception_handler(request: Request, exc: Exception) -> Response:
+    if isinstance(exc, StarletteHTTPException):
+        return await http_exception_handler(request, exc)
     return JSONResponse(
         status_code=500,
         content={"error": "internal_error", "detail": "Unexpected server error."},

@@ -39,7 +39,7 @@ export default function UploadPage() {
     setError(null);
     const form = new FormData();
     form.append("video", file);
-    form.append("label", label);
+    if (label.trim()) form.append("label", label.trim());
     form.append("sport", "basketball");
     // Fetch does not expose upload progress events; replace with axios/streams if adopted later.
     const request = new XMLHttpRequest();
