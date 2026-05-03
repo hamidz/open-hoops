@@ -15,6 +15,14 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Product requirements, API contract, UX flows, security/privacy, testing strategy, and planning gap review docs
 - `CONTRIBUTING.md` contributor guide
 - `.github/workflows/copilot-setup-steps.yml` — Copilot agent environment setup
+- Root `.dockerignore` for smaller Docker build contexts
+- Configurable Docker Compose host ports via `.env`
+
+### Fixed
+- First local run now supports both `localhost` and `127.0.0.1` frontend origins.
+- Frontend API fallback now follows the browser hostname when `NEXT_PUBLIC_API_URL` is unset.
+- Docker Compose commands now load the root `.env` explicitly with `--env-file .env`.
+- Local MinIO images now use pullable development tags.
 
 ---
 

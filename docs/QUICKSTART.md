@@ -69,6 +69,21 @@ MINIO_ROOT_PASSWORD=<choose a strong password, min 8 chars>
 
 The defaults for everything else are fine for local development.
 
+If another local project already uses one of the default ports, change the host port variables in `.env`. For example:
+
+```bash
+API_PORT=8010
+NEXT_PUBLIC_API_URL=http://localhost:8010
+MINIO_API_PORT=9010
+MINIO_CONSOLE_PORT=9011
+```
+
+`NEXT_PUBLIC_API_URL` is baked into the frontend Docker image at build time, so rebuild `web` after changing it:
+
+```bash
+docker compose --env-file .env -f infra/docker-compose.yml up -d --build web
+```
+
 ---
 
 ## 4. Run Setup
@@ -82,6 +97,40 @@ This will:
 - Build and start all Docker containers
 - Create MinIO storage buckets
 - Download the default Ollama LLM model (`llama3.1:8b`, ~4.7 GB — may take a few minutes)
+
+### Fast MVP Smoke Path Without Docker
+
+The current first-workflow MVP can also run natively with local JSON/filesystem storage. This is useful for quick UI/API iteration and does not require PostgreSQL, Redis, MinIO, or an Ollama model.
+
+```bash
+npm ci
+python -m venv .venv
+
+# Windows Git Bash
+. .venv/Scripts/activate
+
+# Linux / macOS / WSL2
+# source .venv/bin/activate
+
+python -m pip install -r apps/api/requirements-dev.txt \
+  -r services/cv_worker/requirements-dev.txt \
+  -r services/analytics_worker/requirements-dev.txt \
+  -r services/llm_service/requirements-dev.txt \
+  -r packages/shared_types/requirements.txt
+```
+
+Start the API in one terminal:
+
+```bash
+cd apps/api
+OPEN_HOOPS_DATA_DIR=../../data/runtime/local-api ../../.venv/Scripts/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Start the web app in another terminal:
+
+```bash
+npm run dev --workspace web -- --hostname 127.0.0.1 --port 3000
+```
 
 ---
 
@@ -112,10 +161,10 @@ If any check fails, see the **Troubleshooting** section below.
 
 | Service | URL |
 |---|---|
-| Dashboard | http://localhost:3000 |
-| API | http://localhost:8000/api/v1/health |
-| API Docs (Swagger) | http://localhost:8000/docs |
-| MinIO Console | http://localhost:9001 |
+| Dashboard | http://localhost:3000 or `http://localhost:${WEB_PORT}` |
+| API | http://localhost:8000/api/v1/health or `http://localhost:${API_PORT}/api/v1/health` |
+| API Docs (Swagger) | http://localhost:8000/docs or `http://localhost:${API_PORT}/docs` |
+| MinIO Console | http://localhost:9001 or `http://localhost:${MINIO_CONSOLE_PORT}` |
 
 
 ---
@@ -129,6 +178,7 @@ If any check fails, see the **Troubleshooting** section below.
 5. Return to http://localhost:3000/dashboard to review uploaded jobs.
 
 > Current MVP note: stats are generated from a deterministic mock analytics pipeline so the full local workflow is usable before the real CV engine phases are complete.
+> Current storage note: the API persists MVP jobs and artifacts with local JSON/filesystem storage under `OPEN_HOOPS_DATA_DIR`. PostgreSQL, Redis, and MinIO run in Compose for the target stack, but they are not yet the active API persistence path.
 
 ---
 
@@ -171,7 +221,7 @@ sudo apt install -y rocm
 ```bash
 make dev-gpu
 # or:
-docker compose -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
+docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
 ```
 
 ### RDNA3 Compatibility Note
@@ -208,15 +258,28 @@ You haven't set `POSTGRES_PASSWORD` in `.env`. Edit the file and set a non-defau
 
 ### MinIO not healthy
 
-Check MinIO logs: `docker compose -f infra/docker-compose.yml logs minio`
+Check MinIO logs: `docker compose --env-file .env -f infra/docker-compose.yml logs minio`
 
 Ensure `MINIO_ROOT_PASSWORD` is at least 8 characters.
+
+### Port already allocated
+
+Another local project may already be using a default port. Update `.env`, then restart the stack:
+
+```bash
+API_PORT=8010
+NEXT_PUBLIC_API_URL=http://localhost:8010
+MINIO_API_PORT=9010
+MINIO_CONSOLE_PORT=9011
+
+docker compose --env-file .env -f infra/docker-compose.yml up -d --build
+```
 
 ### Ollama model pull failed
 
 Pull manually:
 ```bash
-docker compose -f infra/docker-compose.yml exec ollama ollama pull llama3.1:8b
+docker compose --env-file .env -f infra/docker-compose.yml exec ollama ollama pull llama3.1:8b
 ```
 
 ### cv_worker not processing jobs (ROCm)

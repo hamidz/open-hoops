@@ -160,7 +160,47 @@ The phase numbers describe file names and logical capability groups. The recomme
 - quickstart docs
 - sample data
 
-## 8. Key Risks
+## 8. Current Local MVP Progress — 2026-05-03
+
+The first local run has been completed and the repository is demoable as a first-workflow MVP scaffold.
+
+### Verified Locally
+
+- Node workspace dependencies installed with `npm ci`.
+- Python dev dependencies installed in an ignored `.venv`.
+- Native dev smoke path works: FastAPI local JSON storage + Next.js frontend.
+- Docker Compose dev stack starts successfully with the generated local `.env`.
+- Browser demo works through Compose: upload `.mp4`/`.mov` -> completed job -> generated player analytics table.
+- Health checks pass for API, frontend, MinIO, Ollama, PostgreSQL, and Redis.
+
+### Fixes Completed During First Run
+
+- Added loopback-safe API CORS defaults for both `localhost` and `127.0.0.1`.
+- Made the frontend API fallback follow the browser hostname when `NEXT_PUBLIC_API_URL` is not set.
+- Updated Compose commands/scripts/docs/CI to pass `--env-file .env` explicitly.
+- Replaced unavailable MinIO image pins with pullable `latest` images for local development.
+- Added configurable host ports for Docker Compose to avoid collisions with other local projects.
+- Added a root `.dockerignore` so Docker builds do not send `.venv`, `node_modules`, or runtime data.
+
+### Verification Snapshot
+
+- `python -m pytest apps/api/tests services/cv_worker/tests services/analytics_worker/tests services/llm_service/tests -q` -> 11 passed.
+- `npm run lint --workspace web` -> passed.
+- `npm exec --workspace web -- tsc --noEmit` -> passed.
+- `npm run build --workspace web` -> passed.
+- `docker compose --env-file .env -f infra/docker-compose.yml config --quiet` -> passed.
+- `docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml config --quiet` -> passed.
+- `docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml config --quiet` -> passed.
+- `bash scripts/check_health.sh` -> all 7 checks passed.
+
+### Still Deferred
+
+- PostgreSQL-backed job persistence, Alembic migrations, and real MinIO object persistence in the API.
+- ARQ job enqueue/worker execution beyond keep-alive stubs.
+- Real frame-zero extraction from uploaded video.
+- CV detection/tracking, manual court calibration, telemetry export, heatmaps, LLM reports, and annotation workflows.
+
+## 9. Key Risks
 
 1. Ball detection is hard.
 2. Camera quality and angle variation will reduce reliability.
@@ -168,7 +208,7 @@ The phase numbers describe file names and logical capability groups. The recomme
 4. Shot detection is harder than movement analytics.
 5. LLMs can hallucinate if given poor summaries.
 
-## 9. Strategic Recommendations
+## 10. Strategic Recommendations
 
 1. Build the dashboard with **mock telemetry first**.
 2. Treat **manual calibration** as a feature, not a failure.
@@ -176,7 +216,7 @@ The phase numbers describe file names and logical capability groups. The recomme
 4. Keep the entire system **self-hostable**.
 5. Use **Markdown as source of truth** for every phase.
 
-## 10. Definition of Done for Planning Stage
+## 11. Definition of Done for Planning Stage
 
 Planning stage is complete when:
 
@@ -186,7 +226,7 @@ Planning stage is complete when:
 - project owner inputs are clearly listed
 - implementation can begin one phase at a time
 
-## 11. Inputs Needed From Owner
+## 12. Inputs Needed From Owner
 
 See [INPUTS_NEEDED.md](./INPUTS_NEEDED.md).
 
@@ -194,7 +234,7 @@ For the complete MVP requirements, owner review gates, and acceptance criteria, 
 
 ---
 
-## 12. Post-MVP Roadmap
+## 13. Post-MVP Roadmap
 
 The following capabilities are explicitly out of scope for v0.1.0-MVP but are planned for future releases.
 

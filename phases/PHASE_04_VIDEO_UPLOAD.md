@@ -4,7 +4,7 @@
 
 ---
 
-## Status: 🔲 Pending
+## Status: 🟡 In Progress
 
 ---
 
@@ -163,4 +163,6 @@ FRAME_ZERO_EXTRACTION=true
 
 ## Completion Note
 
-> _Agent: add completion date and summary here when done._
+### Progress Note — 2026-05-03
+
+The browser upload flow works through both native dev and Docker Compose: `.mp4` selection, progress upload, redirect to job detail, and generated analytics display. The implementation currently uses local JSON/filesystem storage and mock analytics; remaining Phase 04 scope includes MinIO persistence, PostgreSQL job records, Redis/ARQ enqueue, real frame-zero extraction, and retry UI wiring.

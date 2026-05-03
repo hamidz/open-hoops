@@ -17,7 +17,7 @@
 
 .PHONY: dev dev-gpu stop logs health lint lint-python lint-frontend test test-python test-frontend test-visual build generate-types seed clean help
 
-COMPOSE      = docker compose -f infra/docker-compose.yml
+COMPOSE      = docker compose --env-file .env -f infra/docker-compose.yml
 COMPOSE_GPU  = $(COMPOSE) -f infra/docker-compose.gpu.yml
 COMPOSE_PROD = $(COMPOSE) -f infra/docker-compose.prod.yml
 
@@ -29,13 +29,13 @@ dev:
 	@echo "Starting Open Hoops dev stack (CPU mode)..."
 	@test -f .env || (echo "ERROR: .env not found. Run: cp .env.example .env" && exit 1)
 	$(COMPOSE) up -d
-	@echo "Stack running. Dashboard: http://localhost:3000"
+	@set -a; . ./.env; set +a; echo "Stack running. Dashboard: http://localhost:$${WEB_PORT:-3000}"
 
 dev-gpu:
 	@echo "Starting Open Hoops dev stack (AMD ROCm GPU mode)..."
 	@test -f .env || (echo "ERROR: .env not found. Run: cp .env.example .env" && exit 1)
 	$(COMPOSE_GPU) up -d
-	@echo "Stack running with ROCm GPU. Dashboard: http://localhost:3000"
+	@set -a; . ./.env; set +a; echo "Stack running with ROCm GPU. Dashboard: http://localhost:$${WEB_PORT:-3000}"
 
 stop:
 	$(COMPOSE) down

@@ -4,7 +4,7 @@
 
 ---
 
-## Status: 🔲 Pending
+## Status: 🟡 In Progress
 
 ---
 
@@ -188,4 +188,6 @@ SVG should accept a `orientation` prop: `full` | `half-left` | `half-right`.
 
 ## Completion Note
 
-> _Agent: add completion date and summary here when done._
+### Progress Note — 2026-05-03
+
+The current dashboard can list jobs, show job details, and render generated first-pass player analytics after an upload. This is enough for a demoable first workflow, but the full Phase 03 target remains open: mock telemetry export, court SVG/tabs, scrubber interactions, and richer seeded dashboard states.

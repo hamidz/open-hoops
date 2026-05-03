@@ -1,3 +1,7 @@
+import asyncio
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
 from fastapi import FastAPI
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,9 +11,23 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from app.config import settings
-from app.routers import health, jobs
+from app.routers import calibration, health, jobs
 
-app = FastAPI(title="Open Hoops API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    # Run Alembic migrations before accepting traffic (no-op when DATABASE_URL unset).
+    from app.db import run_migrations
+
+    await asyncio.to_thread(run_migrations)
+    yield
+    # Graceful shutdown: close the ARQ Redis pool if it was opened.
+    from app.services.queue import close_pool
+
+    await close_pool()
+
+
+app = FastAPI(title="Open Hoops API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.origins,
@@ -19,6 +37,7 @@ app.add_middleware(
 )
 app.include_router(health.router)
 app.include_router(jobs.router)
+app.include_router(calibration.router)
 
 
 @app.exception_handler(Exception)

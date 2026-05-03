@@ -4,7 +4,7 @@
 
 ---
 
-## Status: 🔲 Pending
+## Status: 🟡 In Progress
 
 ---
 
@@ -85,7 +85,7 @@ Your job is to implement `infra/docker-compose.yml` and all service Dockerfiles 
 
 ### Validation
 
-- [ ] `docker compose -f infra/docker-compose.yml up --build` starts all services without error.
+- [ ] `docker compose --env-file .env -f infra/docker-compose.yml up --build` starts all services without error.
 - [ ] `curl http://localhost:8000/api/v1/health` returns `200 OK` with all services healthy.
 - [ ] `./scripts/check_health.sh` passes all 7 checks.
 - [ ] MinIO console accessible at `http://localhost:9001`.
@@ -106,7 +106,7 @@ Your job is to implement `infra/docker-compose.yml` and all service Dockerfiles 
 
 ## Definition of Done
 
-- [ ] `docker compose -f infra/docker-compose.yml up --build` succeeds with no exit errors.
+- [ ] `docker compose --env-file .env -f infra/docker-compose.yml up --build` succeeds with no exit errors.
 - [ ] `GET /api/v1/health` returns HTTP 200 with all checks passing.
 - [ ] All tasks above checked off.
 - [ ] Phase status updated in `AGENTIC_EXECUTION_PLAN.md`.
@@ -115,4 +115,6 @@ Your job is to implement `infra/docker-compose.yml` and all service Dockerfiles 
 
 ## Completion Note
 
-> _Agent: add completion date and summary here when done._
+### Progress Note — 2026-05-03
+
+The full Docker Compose stack starts locally and `scripts/check_health.sh` passes all 7 checks. First-run fixes completed: explicit `--env-file .env`, pullable MinIO images, configurable host ports, and clean Compose config validation. Remaining Phase 02 scope: database-backed API health checks, Alembic schema, and real ARQ queue connectivity instead of local JSON plus keep-alive worker stubs.

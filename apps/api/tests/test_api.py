@@ -2,6 +2,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from app.config import Settings
 from app.main import app
 from app.services.store import JsonStore
 
@@ -10,7 +11,18 @@ def test_health() -> None:
     client = TestClient(app)
     response = client.get("/api/v1/health")
     assert response.status_code == 200
-    assert response.json()["status"] == "ok"
+    body = response.json()
+    # status is "ok" when all services are reachable, "degraded" otherwise.
+    # In unit-test environments the external services are not running, so we only
+    # verify the response shape rather than a specific status string.
+    assert body["status"] in ("ok", "degraded")
+    assert "storage_mode" in body
+    assert "dependencies" in body
+
+
+def test_default_cors_origins_include_common_loopback_hosts() -> None:
+    settings = Settings(_env_file=None)
+    assert settings.origins == ["http://localhost:3000", "http://127.0.0.1:3000"]
 
 
 def test_upload_to_stats_workflow(tmp_path: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]

@@ -1,5 +1,5 @@
 # Open Hoops — Production Docker Compose Override
-# Use: docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up -d
+# Use: docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up -d
 #
 # This override:
 # - Removes host-exposed ports except 3000 and 8000 (web-facing)
@@ -7,8 +7,6 @@
 # - Removes development volumes
 # - Forces explicit POSTGRES_PASSWORD and MINIO credentials (no defaults)
 # - Sets production-appropriate resource limits
-
-version: "3.9"
 
 services:
   postgres:

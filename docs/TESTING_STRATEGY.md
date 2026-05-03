@@ -36,13 +36,13 @@ Once implementation exists, these root commands must remain valid:
 make lint
 make test
 make build
-docker compose -f infra/docker-compose.yml config
+docker compose --env-file .env -f infra/docker-compose.yml config
 ```
 
 Phase 12 adds release validation:
 
 ```bash
-docker compose -f infra/docker-compose.prod.yml up --build
+docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up --build
 ./scripts/check_health.sh
 ```
 

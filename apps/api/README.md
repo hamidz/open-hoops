@@ -6,6 +6,7 @@ Run locally:
 
 ```bash
 cd apps/api
-pip install -r requirements-dev.txt
-uvicorn app.main:app --reload
+../../.venv/Scripts/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
+
+The current MVP API uses local JSON/filesystem storage. Set `OPEN_HOOPS_DATA_DIR` to control where upload artifacts and job records are written.

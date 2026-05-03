@@ -91,10 +91,10 @@ Owner confirms → next phase
 | Phase | Name | Status |
 |---|---|---|
 | 00 | [Discovery](./phases/PHASE_00_DISCOVERY.md) | ✅ Done |
-| 01 | [Repo Boilerplate](./phases/PHASE_01_REPO_BOILERPLATE.md) | 🔲 Pending |
-| 02 | [Local Dev Stack](./phases/PHASE_02_LOCAL_DEV_STACK.md) | 🔲 Pending |
-| 03 | [Mock Data Dashboard](./phases/PHASE_03_MOCK_DATA_DASHBOARD.md) | 🔲 Pending |
-| 04 | [Video Upload Workflow](./phases/PHASE_04_VIDEO_UPLOAD.md) | 🔲 Pending |
+| 01 | [Repo Boilerplate](./phases/PHASE_01_REPO_BOILERPLATE.md) | 🟡 In Progress — scaffold/build/test path verified |
+| 02 | [Local Dev Stack](./phases/PHASE_02_LOCAL_DEV_STACK.md) | 🟡 In Progress — Compose stack health verified; DB-backed API work remains |
+| 03 | [Mock Data Dashboard](./phases/PHASE_03_MOCK_DATA_DASHBOARD.md) | 🟡 In Progress — jobs dashboard/detail analytics verified; full court tabs remain |
+| 04 | [Video Upload Workflow](./phases/PHASE_04_VIDEO_UPLOAD.md) | 🟡 In Progress — local upload-to-stats flow verified; queue/MinIO path remains |
 | 05 | [CV Engine MVP](./phases/PHASE_05_CV_ENGINE.md) | 🔲 Pending |
 | 06 | [Court Calibration](./phases/PHASE_06_COURT_CALIBRATION.md) | 🔲 Pending |
 | 07 | [Telemetry Export](./phases/PHASE_07_TELEMETRY_EXPORT.md) | 🔲 Pending |

@@ -41,7 +41,7 @@ If you have an AMD GPU and want hardware acceleration for the CV worker:
 rocm-smi --showproductname
 
 # Run with GPU override
-docker compose -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
+docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
 ```
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) Section 9 and [docs/QUICKSTART.md](./docs/QUICKSTART.md) for the full setup walkthrough.
@@ -85,10 +85,10 @@ cd ~/open-hoops
 ./scripts/setup.sh
 
 # 3. Start the full dev stack (CPU mode)
-docker compose -f infra/docker-compose.yml up -d
+docker compose --env-file .env -f infra/docker-compose.yml up -d
 
 # 3a. Start with AMD ROCm GPU acceleration (WSL2 only)
-docker compose -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
+docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
 
 # 4. Verify all services are healthy
 ./scripts/check_health.sh

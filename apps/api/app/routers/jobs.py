@@ -94,3 +94,10 @@ def delete_job(job_id: str) -> Response:
     _job_or_404(job_id)
     store.delete_job(job_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/{job_id}/telemetry")
+def get_telemetry_url(job_id: str) -> dict[str, str | None]:
+    """Return the internal telemetry URL for a job (populated after CV processing)."""
+    job = _job_or_404(job_id)
+    return {"job_id": job_id, "telemetry_url": job.telemetry_url}

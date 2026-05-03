@@ -1,5 +1,5 @@
 # Open Hoops — AMD ROCm GPU Acceleration Override
-# Use: docker compose -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
+# Use: docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
 #
 # Requirements:
 #   - WSL2 on Windows (Ubuntu 22.04+) or native Linux
@@ -9,8 +9,6 @@
 #
 # Verify ROCm is working: rocm-smi --showproductname
 # Verify Docker sees GPU: docker run --rm --device /dev/kfd --device /dev/dri rocm/pytorch python -c "import torch; print(torch.cuda.is_available())"
-
-version: "3.9"
 
 services:
   cv_worker:

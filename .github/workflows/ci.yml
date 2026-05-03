@@ -174,10 +174,10 @@ jobs:
           echo "MINIO_ROOT_PASSWORD=ci_password_8chars" >> .env
 
       - name: Validate docker-compose.yml
-        run: docker compose -f infra/docker-compose.yml config --quiet
+        run: docker compose --env-file .env -f infra/docker-compose.yml config --quiet
 
       - name: Validate docker-compose.gpu.yml
-        run: docker compose -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml config --quiet
+        run: docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml config --quiet
 
       - name: Validate docker-compose.prod.yml
-        run: docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml config --quiet
+        run: docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml config --quiet

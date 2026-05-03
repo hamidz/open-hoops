@@ -1,6 +1,11 @@
 import type { AnalyticsSummary, Job } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+function defaultApiUrl(): string {
+  if (typeof window === "undefined") return "http://localhost:8000";
+  return `${window.location.protocol}//${window.location.hostname}:8000`;
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl();
 
 async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {

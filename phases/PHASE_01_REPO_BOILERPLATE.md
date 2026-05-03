@@ -4,7 +4,7 @@
 
 ---
 
-## Status: 🔲 Pending
+## Status: 🟡 In Progress
 
 ---
 
@@ -167,8 +167,8 @@ open-hoops/
 - [ ] All tasks above checked off.
 - [ ] `make lint` passes on all services.
 - [ ] `make test` passes (stubs allowed with `continue-on-error`).
-- [ ] `docker compose -f infra/docker-compose.yml config` validates without errors.
-- [ ] `docker compose -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml config` validates.
+- [ ] `docker compose --env-file .env -f infra/docker-compose.yml config` validates without errors.
+- [ ] `docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml config` validates.
 - [ ] `turbo run build` completes (may be empty output for scaffolding).
 - [ ] CI pipeline passes on the `phase/01-repo-boilerplate` branch.
 - [ ] Phase status updated in `AGENTIC_EXECUTION_PLAN.md`.
@@ -177,4 +177,6 @@ open-hoops/
 
 ## Completion Note
 
-> _Agent: add completion date and summary here when done._
+### Progress Note — 2026-05-03
+
+First local run verified the scaffold is usable: Node and Python dependencies install, all Python tests pass, frontend lint/type/build passes, app Docker images build, and CPU/GPU/prod Compose configs validate. Remaining Phase 01 cleanup includes reconciling this checklist with implemented files and completing any missing tooling conventions such as Prettier/shadcn decisions.

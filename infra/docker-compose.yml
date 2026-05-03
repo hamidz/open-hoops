@@ -1,8 +1,6 @@
-version: "3.9"
-
 # Open Hoops — Local Development Stack
-# Run: docker compose -f infra/docker-compose.yml up -d
-# GPU (AMD ROCm): docker compose -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
+# Run: docker compose --env-file .env -f infra/docker-compose.yml up -d
+# GPU (AMD ROCm): docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.gpu.yml up -d
 #
 # IMPORTANT (Windows users): Clone this repo inside WSL2's Linux filesystem,
 # not on the Windows filesystem (/mnt/c/...), to avoid volume performance issues.
@@ -38,7 +36,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     networks:
       - app-network
     healthcheck:
@@ -66,7 +64,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     networks:
       - app-network
     healthcheck:
@@ -80,7 +78,7 @@ services:
           memory: 512m
 
   minio:
-    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    image: minio/minio:latest
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
@@ -89,8 +87,8 @@ services:
     volumes:
       - minio_data:/data
     ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # MinIO Console (http://localhost:9001)
+      - "${MINIO_API_PORT:-9000}:9000"         # S3 API
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"     # MinIO Console
     networks:
       - app-network
     healthcheck:
@@ -105,7 +103,7 @@ services:
           memory: 2g
 
   minio-init:
-    image: minio/mc:RELEASE.2025-04-28T19-14-02Z
+    image: minio/mc:latest
     depends_on:
       minio:
         condition: service_healthy
@@ -130,7 +128,7 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     ports:
-      - "11434:11434"
+      - "${OLLAMA_PORT:-11434}:11434"
     networks:
       - app-network
     deploy:
@@ -164,7 +162,7 @@ services:
     volumes:
       - app_data:/data/open-hoops
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     networks:
       - app-network
     depends_on:
@@ -195,7 +193,7 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3000}:3000"
     networks:
       - app-network
     depends_on:

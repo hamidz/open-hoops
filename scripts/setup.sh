@@ -94,7 +94,7 @@ info "Environment variables look OK."
 # 4. Start the stack
 # ─────────────────────────────────────────────
 info "Starting Docker Compose stack..."
-docker compose -f infra/docker-compose.yml up -d --build
+docker compose --env-file .env -f infra/docker-compose.yml up -d --build
 
 # ─────────────────────────────────────────────
 # 5. Wait for health
@@ -109,7 +109,7 @@ while ! ./scripts/check_health.sh --quiet 2>/dev/null; do
     ELAPSED=$((ELAPSED + 5))
     if [[ $ELAPSED -ge $MAX_WAIT ]]; then
         warn "Services did not become healthy within ${MAX_WAIT}s."
-        warn "Check logs: docker compose -f infra/docker-compose.yml logs"
+        warn "Check logs: docker compose --env-file .env -f infra/docker-compose.yml logs"
         break
     fi
     echo -n "."
@@ -122,8 +122,8 @@ echo ""
 LLM_MODEL="${LLM_MODEL:-llama3.1:8b}"
 info "Pulling Ollama model: ${LLM_MODEL}"
 info "(This may take several minutes on first run — ${LLM_MODEL} is ~4–5 GB)"
-docker compose -f infra/docker-compose.yml exec ollama ollama pull "${LLM_MODEL}" || \
-    warn "Ollama model pull failed. You can pull it manually: docker compose exec ollama ollama pull ${LLM_MODEL}"
+docker compose --env-file .env -f infra/docker-compose.yml exec ollama ollama pull "${LLM_MODEL}" || \
+    warn "Ollama model pull failed. You can pull it manually: docker compose --env-file .env -f infra/docker-compose.yml exec ollama ollama pull ${LLM_MODEL}"
 
 # ─────────────────────────────────────────────
 # Done
@@ -131,10 +131,10 @@ docker compose -f infra/docker-compose.yml exec ollama ollama pull "${LLM_MODEL}
 echo ""
 info "Setup complete!"
 echo ""
-echo "  Dashboard:    http://localhost:3000"
-echo "  API:          http://localhost:8000/api/v1/health"
-echo "  API Docs:     http://localhost:8000/docs"
-echo "  MinIO Console: http://localhost:9001"
+echo "  Dashboard:     http://localhost:${WEB_PORT:-3000}"
+echo "  API:           http://localhost:${API_PORT:-8000}/api/v1/health"
+echo "  API Docs:      http://localhost:${API_PORT:-8000}/docs"
+echo "  MinIO Console: http://localhost:${MINIO_CONSOLE_PORT:-9001}"
 echo ""
 echo "  Stop stack:   make stop"
 echo "  View logs:    make logs"

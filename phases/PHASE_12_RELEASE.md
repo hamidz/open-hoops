@@ -71,7 +71,7 @@ For each service, create a production Dockerfile:
   
   1. Clone the repo
   2. Run: ./scripts/setup.sh
-  3. Run: docker compose -f infra/docker-compose.prod.yml up -d
+  3. Run: docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up -d
   4. Open: http://localhost:3000
   ```
 - [ ] Create `docs/QUICKSTART.md`:
@@ -96,7 +96,7 @@ For each service, create a production Dockerfile:
 
 - [ ] All unit tests pass: `make test`.
 - [ ] All linters pass: `make lint`.
-- [ ] `docker compose -f infra/docker-compose.prod.yml up --build` succeeds.
+- [ ] `docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up --build` succeeds.
 - [ ] `./scripts/check_health.sh` reports all services healthy.
 - [ ] `docs/QUICKSTART.md` reviewed and accurate.
 - [ ] `INPUTS_NEEDED.md` status is `CONFIRMED`.
@@ -134,7 +134,7 @@ Before release, verify:
 
 ## Definition of Done
 
-- [ ] `./scripts/setup.sh && docker compose -f infra/docker-compose.prod.yml up -d` runs end-to-end on a clean machine.
+- [ ] `./scripts/setup.sh && docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up -d` runs end-to-end on a clean machine.
 - [ ] Quickstart guide is accurate and complete.
 - [ ] All release checklist items above are checked.
 - [ ] Phase status updated in `AGENTIC_EXECUTION_PLAN.md`.
