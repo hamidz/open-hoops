@@ -23,6 +23,7 @@
 | [docs/STACK.md](./STACK.md) | Technology choices with rationale |
 | [docs/GLOSSARY.md](./GLOSSARY.md) | Domain terms and definitions |
 | [docs/ADR.md](./ADR.md) | Architecture Decision Records |
+| [docs/DATA_SCHEMAS.md](./DATA_SCHEMAS.md) | Canonical data schemas (Job, Telemetry, Analytics, Annotations, Report) |
 
 ---
 

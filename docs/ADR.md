@@ -213,6 +213,56 @@ Default to ByteTrack for multi-object tracking. Revisit BoT-SORT in Phase 05 bas
 
 ---
 
+## ADR-010 — TypeScript / Pydantic Type Synchronization
+
+**Date:** 2025-05  
+**Status:** Accepted
+
+### Decision
+
+Use `datamodel-code-generator` (via `pydantic`) to automatically generate TypeScript types from Pydantic models. The canonical type definitions live in Python (`packages/shared_types/models/`). TypeScript equivalents in `packages/shared_types/types/` are generated, never hand-edited.
+
+A `make generate-types` command in the root Makefile runs the generator. This command must be run whenever a Pydantic model changes. CI will fail if generated TypeScript types are out of sync with their Pydantic source.
+
+### Rationale
+
+- Manual maintenance of parallel type definitions causes silent drift and integration bugs.
+- Pydantic v2 models are already the source of truth for the API and workers.
+- `datamodel-code-generator` supports Pydantic v2 and outputs TypeScript interfaces.
+- A CI check enforces sync — removes the risk of a developer forgetting to regenerate.
+
+### Alternatives Considered
+
+- Manual TypeScript maintenance: rejected — guaranteed to drift over time.
+- `pydantic-to-typescript`: less actively maintained than `datamodel-code-generator`.
+- GraphQL schema as intermediary: overkill for this project's simple REST API.
+
+---
+
+## ADR-011 — Single-POST Upload for MVP (Chunked Upload Deferred)
+
+**Date:** 2025-05  
+**Status:** Accepted
+
+### Decision
+
+The MVP uses a single multipart HTTP POST for video uploads, with a 4 GB maximum. Chunked/resumable upload (e.g., via tus.io) is explicitly deferred to a post-MVP release.
+
+### Rationale
+
+- The target use case is a coach uploading from a local machine to a local Docker stack — network interruptions are rare.
+- Single-POST with a progress bar satisfies the MVP UX requirement.
+- tus.io or S3 multipart adds significant complexity to both frontend and backend.
+- Resumable upload can be added as a targeted improvement in a future phase without changing the core data model.
+
+### Alternatives Considered
+
+- tus.io protocol: best-in-class resumable upload, but requires a dedicated server component and client library.
+- S3/MinIO multipart upload API: viable but complex to coordinate from FastAPI streaming endpoint.
+- Chunked XHR with manual reassembly: error-prone, non-standard.
+
+---
+
 ## How To Add a New ADR
 
 Copy this template:

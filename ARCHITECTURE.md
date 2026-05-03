@@ -197,15 +197,19 @@ All subsequent detections mapped to court coordinates
 {
   "job_id": "uuid",
   "status": "queued | processing | calibration_needed | complete | failed",
+  "progress_pct": 0,
   "video_url": "minio://...",
   "created_at": "ISO8601",
   "updated_at": "ISO8601",
   "calibration": { ... },
   "telemetry_url": "minio://...",
   "analytics_summary_url": "minio://...",
-  "report_url": "minio://..."
+  "report_url": "minio://...",
+  "error_message": null
 }
 ```
+
+`progress_pct` is an integer 0–100 updated by the CV worker every 100 frames during processing. The frontend polls this alongside `status` to display a progress bar. `error_message` stores the failure reason when `status` is `failed`.
 
 ### 5.2 Detection (per frame)
 
@@ -279,3 +283,34 @@ These decisions are intentionally deferred to the relevant phase:
 | YOLOv8n vs YOLOv8m default weight | Phase 05 |
 | Court line auto-detection vs always manual | Phase 06 |
 | PostgreSQL schema migrations tool (Alembic vs raw) | Phase 01 |
+| TypeScript / Pydantic type sync strategy (manual vs code-gen) | Phase 07 |
+| Chunked/resumable upload vs single-POST (tus.io vs multipart) | Phase 04 |
+
+---
+
+## 9. GPU Support Notes
+
+The CV worker supports optional GPU acceleration. Hardware is detected at runtime:
+
+- **NVIDIA CUDA**: Ultralytics YOLO will use CUDA automatically if `torch` detects a GPU and `nvidia-container-toolkit` is installed on the host.
+- **Apple MPS**: Detected automatically on macOS (development only — not supported in Docker).
+- **CPU fallback**: Always available and required for the MVP. Target: ≥ 5 frames/sec on CPU.
+
+### Docker GPU Configuration (NVIDIA)
+
+To enable GPU pass-through in Docker Compose, add a `deploy` section to the `cv_worker` service:
+
+```yaml
+cv_worker:
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu]
+```
+
+This requires `nvidia-container-toolkit` installed on the Docker host. See the [NVIDIA Container Toolkit install guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
+
+GPU is **optional** for MVP. The `docker-compose.yml` defaults to CPU-only. A `docker-compose.gpu.yml` override file is provided for GPU users (Phase 02).

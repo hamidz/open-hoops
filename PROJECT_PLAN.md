@@ -187,3 +187,44 @@ Planning stage is complete when:
 ## 11. Inputs Needed From Owner
 
 See [INPUTS_NEEDED.md](./INPUTS_NEEDED.md).
+
+---
+
+## 12. Post-MVP Roadmap
+
+The following capabilities are explicitly out of scope for v0.1.0-MVP but are planned for future releases.
+
+### Performance & Accuracy
+
+- **Automatic court calibration** — Hough line detection + template matching to eliminate manual point-click. Targeted for v0.2.0.
+- **Fine-tuned YOLO model** — Domain-specific training data for better ball detection and player/referee disambiguation.
+- **BoT-SORT as default tracker** — Better identity preservation for cameras with minor pan/tilt. Revisit after Phase 05 evaluation.
+- **Re-ID module** — Re-identification across shot boundaries and occlusions using appearance embeddings.
+
+### Video Input
+
+- **Multi-camera support** — Fuse tracks from 2+ synchronized camera angles.
+- **Live stream analytics** — RTSP/HLS input for real-time processing (significant architecture change).
+- **Pan-tilt-zoom (PTZ) camera support** — Motion compensation for moving cameras.
+- **Chunked/resumable upload** — tus.io protocol for large files over slow connections.
+
+### Analytics
+
+- **Shot detection** — Automatic detection of shot attempts from trajectory analysis (no annotation required).
+- **Possession tracking** — Ball-player proximity to determine possession sequences.
+- **Play recognition** — Pattern matching to identify common plays (pick-and-roll, fast break, etc.).
+- **Season aggregation** — Combine analytics across multiple games for season-level trends.
+
+### Reporting & Export
+
+- **PDF report export** — Printable coaching report with embedded visualizations.
+- **Video clip export** — Auto-cut highlight clips based on annotated shot events.
+- **CSV export** — Raw telemetry and analytics for import into third-party tools.
+- **Shareable report links** — Expiring share links for distributing reports without account login.
+
+### Infrastructure
+
+- **Cloud deployment option** — Optional cloud profile (AWS or GCP) for teams without local GPU hardware.
+- **Multi-user support** — Authentication, team workspaces, and role-based access control.
+- **Mobile-responsive UI** — Optimized dashboard experience for tablet/phone review.
+- **Sensor-agnostic telemetry ingestion** — Accept GPS, UWB, or RFID position data directly, bypassing the CV pipeline.

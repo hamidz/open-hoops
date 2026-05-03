@@ -102,7 +102,8 @@ For each service, create a production Dockerfile:
 - [ ] `INPUTS_NEEDED.md` status is `CONFIRMED`.
 - [ ] All phase docs have completion notes.
 - [ ] `AGENTIC_EXECUTION_PLAN.md` phase index fully updated.
-- [ ] `docs/ADR.md` updated with any deferred decisions now resolved.
+- [ ] `docs/ADR.md` updated with any deferred decisions now resolved (including ADR-009 tracker confirmation).
+- [ ] `CHANGELOG.md` updated with all changes for the `[0.1.0-mvp]` entry.
 - [ ] Git tag created: `v0.1.0-mvp`.
 
 ### Security Review
