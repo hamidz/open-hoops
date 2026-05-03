@@ -8,6 +8,7 @@ from app.services.store import store
 from app.services.uploads import create_upload_job
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
+RETRY_STARTED_PROGRESS = 50
 
 
 def _job_or_404(job_id: str) -> Job:
@@ -61,7 +62,7 @@ def retry_job(job_id: str) -> Job:
             detail={"error": "invalid_state", "detail": "Only failed jobs can be retried."},
         )
     job.status = "processing"
-    job.progress_pct = 50
+    job.progress_pct = RETRY_STARTED_PROGRESS
     job.error_message = None
     summary = generate_first_workflow_stats(job.job_id, job.file_size_bytes)
     store.save_analytics(summary)

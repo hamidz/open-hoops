@@ -5,6 +5,7 @@ from app.models import AnalyticsSummary, PlayerAnalytics, ZoneDistribution
 
 
 def generate_first_workflow_stats(job_id: str, file_size_bytes: int) -> AnalyticsSummary:
+    """Return deterministic MVP stats until later phases replace this with CV analytics."""
     rng = Random(job_id)
     size_factor = max(1, min(12, file_size_bytes // 1_000_000 + 1))
     players: list[PlayerAnalytics] = []

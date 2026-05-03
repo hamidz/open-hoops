@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -44,13 +45,7 @@ class JsonStore:
         self.job_path(job_id).unlink(missing_ok=True)
         for directory in (self.videos_dir / job_id, self.artifacts_dir / job_id):
             if directory.exists():
-                for child in directory.rglob("*"):
-                    if child.is_file():
-                        child.unlink()
-                for child in sorted(directory.rglob("*"), reverse=True):
-                    if child.is_dir():
-                        child.rmdir()
-                directory.rmdir()
+                shutil.rmtree(directory)
 
     def save_analytics(self, summary: AnalyticsSummary) -> None:
         path = self.analytics_path(summary.job_id)

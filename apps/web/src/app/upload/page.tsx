@@ -41,7 +41,7 @@ export default function UploadPage() {
     form.append("video", file);
     form.append("label", label);
     form.append("sport", "basketball");
-    // Fetch does not expose upload progress events; XHR keeps the MVP progress bar accurate.
+    // Fetch does not expose upload progress events; replace with axios/streams if adopted later.
     const request = new XMLHttpRequest();
     request.upload.onprogress = (event) => {
       if (event.lengthComputable) setProgress(Math.round((event.loaded / event.total) * 100));
@@ -52,7 +52,12 @@ export default function UploadPage() {
         const body = JSON.parse(request.responseText) as { job_id: string };
         router.push(`/dashboard/jobs/${body.job_id}`);
       } else {
-        setError(request.responseText || `Upload failed (${request.status})`);
+        try {
+          const body = JSON.parse(request.responseText) as { detail?: { detail?: string } | string; error?: string };
+          setError(typeof body.detail === "string" ? body.detail : body.detail?.detail ?? body.error ?? `Upload failed (${request.status})`);
+        } catch {
+          setError(`Upload failed (${request.status})`);
+        }
       }
     };
     request.onerror = () => {
