@@ -10,6 +10,12 @@ Runnable first-workflow MVP scaffold.
 
 The repository now includes a Dockerized FastAPI backend, Next.js frontend, shared types, worker stubs, and a local upload-to-stats workflow. The broader CV, calibration, heatmap, annotation, and LLM phases remain guided by the Markdown phase plans.
 
+**Current MVP storage mode:** local JSON documents plus local filesystem artifacts under `OPEN_HOOPS_DATA_DIR`.
+
+- Jobs and analytics summaries are persisted by the API using the JSON-backed store in `apps/api/app/services/store.py`.
+- The long-term target architecture remains local PostgreSQL + MinIO + Redis, but that stack is not yet the active persistence path in the API.
+- Supabase is not part of the current implementation or recommended near-term roadmap.
+
 ## Mission
 
 Democratize pro-style basketball analytics using open-source computer vision, local processing, and agent-assisted execution.

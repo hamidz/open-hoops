@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -12,6 +12,7 @@ class ErrorResponse(BaseModel):
 
 
 class Job(BaseModel):
+    schema_version: str = "1.0"
     job_id: str
     status: JobStatus
     progress_pct: int = Field(ge=0, le=100)
@@ -21,6 +22,7 @@ class Job(BaseModel):
     file_size_bytes: int = Field(ge=0)
     video_url: str
     frame_zero_url: str | None = None
+    calibration_json: dict[str, Any] | None = None
     telemetry_url: str | None = None
     analytics_summary_url: str | None = None
     report_url: str | None = None

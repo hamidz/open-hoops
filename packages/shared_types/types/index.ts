@@ -3,6 +3,7 @@
 export type JobStatus = 'queued' | 'processing' | 'calibration_needed' | 'complete' | 'failed';
 
 export interface Job {
+  schema_version?: string;
   job_id: string;
   status: JobStatus;
   progress_pct: number;
@@ -12,6 +13,7 @@ export interface Job {
   file_size_bytes: number;
   video_url: string;
   frame_zero_url?: string | null;
+  calibration_json?: Record<string, unknown> | null;
   telemetry_url?: string | null;
   analytics_summary_url?: string | null;
   report_url?: string | null;

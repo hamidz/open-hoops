@@ -65,10 +65,9 @@ def retry_job(job_id: str) -> Job:
     job.progress_pct = RETRY_STARTED_PROGRESS
     job.error_message = None
     summary = generate_first_workflow_stats(job.job_id, job.file_size_bytes)
-    store.save_analytics(summary)
+    job.analytics_summary_url = store.save_analytics(summary)
     job.status = "complete"
     job.progress_pct = 100
-    job.analytics_summary_url = f"file://{store.analytics_path(job.job_id)}"
     job.updated_at = store.now()
     store.save_job(job)
     return job

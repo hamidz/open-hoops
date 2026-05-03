@@ -59,14 +59,19 @@ Response:
 {
   "status": "ok",
   "version": "0.1.0-mvp",
+  "storage_mode": "local_json",
+  "workflow_mode": "mock-first",
   "dependencies": {
-    "postgres": "ok",
-    "redis": "ok",
-    "minio": "ok",
-    "ollama": "ok"
+    "api": "ok",
+    "storage": "local_json"
   }
 }
 ```
+
+Current MVP note:
+
+- The running API currently reports the active storage mode, not the future target architecture.
+- PostgreSQL, Redis, MinIO, and Ollama health checks become part of this endpoint as those integrations move from planned architecture into the active runtime path.
 
 ---
 
@@ -104,8 +109,8 @@ State notes:
 
 - First-workflow MVP behavior: until the CV worker is fully implemented, accepted uploads are stored locally and completed with deterministic generated analytics so users can validate the end-to-end UI.
 - Upload validation failure returns `400`, `413`, or `415`.
-- MinIO upload failure returns no job record.
-- Redis enqueue failure creates the job as `failed` with `error_message` populated.
+- Current MVP storage writes files beneath `OPEN_HOOPS_DATA_DIR` and returns `file://` artifact URLs.
+- MinIO upload failure and Redis enqueue failure are future-path concerns once the API is wired to those services.
 
 ---
 

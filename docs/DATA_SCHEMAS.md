@@ -4,14 +4,25 @@
 > This document is the single source of truth. Phase docs and service code must conform to these schemas.
 > All schemas carry a `schema_version` field. See the versioning policy at the bottom.
 
+## MVP Storage Mode (Current)
+
+The current runnable MVP persists data with **local JSON documents plus local filesystem artifacts** under `OPEN_HOOPS_DATA_DIR`.
+
+- **Implemented now:** `job.json` records in `jobs/` and `analytics_summary.json` records in `artifacts/{job_id}/`
+- **Planned document types:** `telemetry.json`, `annotations.json`, and `coaching_report.json`
+- **Next storage step:** move job metadata/state to local PostgreSQL and large artifacts to MinIO once real worker pipelines, richer querying, and annotation/recompute flows land
+
+PostgreSQL and MinIO remain the intended target architecture, but they are not yet the active persistence path in the API runtime.
+
 ---
 
-## 1. Job Record (PostgreSQL)
+## 1. Job Record
 
-Stored in the `jobs` table. Returned by `GET /api/jobs/{job_id}`.
+Stored as `jobs/{job_id}.json` in the current MVP. Planned to move to the `jobs` PostgreSQL table in a later phase. Returned by `GET /api/jobs/{job_id}`.
 
 ```json
 {
+  "schema_version": "1.0",
   "job_id": "uuid",
   "status": "queued | processing | calibration_needed | complete | failed",
   "progress_pct": 0,
@@ -32,10 +43,12 @@ Stored in the `jobs` table. Returned by `GET /api/jobs/{job_id}`.
 ```
 
 **Field notes:**
+- `schema_version`: increment when the stored job document shape changes.
 - `progress_pct`: 0–100 integer. Updated by the CV worker every 100 frames during `processing`.
 - `calibration_json`: serialized homography matrix + calibration points. `null` until Phase 06 calibration is complete.
 - `error_message`: populated only when `status` is `failed`. Human-readable failure reason.
 - `frame_zero_url`: set at upload time (Phase 04), before CV processing begins.
+- Current MVP implementations may return `file://` URLs for local artifacts instead of `minio://` URLs.
 
 ---
 
@@ -63,7 +76,7 @@ Stored in the `calibration_json` field of the Job record.
 
 ## 3. Telemetry Document (`telemetry.json`)
 
-Stored in MinIO at `telemetry/{job_id}/telemetry.json`.
+Planned document. Stored in MinIO at `telemetry/{job_id}/telemetry.json` once the CV pipeline writes real telemetry output.
 
 Defined by: `packages/shared_types/models/telemetry.py` (Pydantic) and `packages/shared_types/types/telemetry.ts` (TypeScript, auto-generated).
 
@@ -115,7 +128,7 @@ Defined by: `packages/shared_types/models/telemetry.py` (Pydantic) and `packages
 
 ## 4. Analytics Summary (`analytics_summary.json`)
 
-Stored in MinIO at `artifacts/{job_id}/analytics_summary.json`.
+Stored as `artifacts/{job_id}/analytics_summary.json` in the current MVP and planned to move to MinIO-backed artifact storage in a later phase.
 
 Defined by: `packages/shared_types/models/analytics.py`.
 
@@ -177,7 +190,7 @@ Defined by: `packages/shared_types/models/analytics.py`.
 
 ## 5. Annotation Document (`annotations.json`)
 
-Stored in MinIO at `artifacts/{job_id}/annotations.json` and mirrored to PostgreSQL `annotations` table.
+Planned document. Stored in MinIO at `artifacts/{job_id}/annotations.json` and mirrored to PostgreSQL `annotations` table once Phase 11 lands.
 
 Defined by: `packages/shared_types/models/annotation.py`.
 
@@ -220,7 +233,7 @@ Defined by: `packages/shared_types/models/annotation.py`.
 
 ## 6. Coaching Report (`coaching_report.json`)
 
-Stored in MinIO at `artifacts/{job_id}/coaching_report.json`.
+Planned document. Stored in MinIO at `artifacts/{job_id}/coaching_report.json` once Phase 10 lands.
 
 ```json
 {

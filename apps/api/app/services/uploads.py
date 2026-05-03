@@ -43,18 +43,10 @@ async def create_upload_job(video: UploadFile, label: str | None, sport: str) ->
     job_id = str(uuid4())
     suffix = Path(original_filename).suffix.lower()
     created_at = store.now()
-    video_dir = store.videos_dir / job_id
-    video_dir.mkdir(parents=True, exist_ok=True)
-    video_path = video_dir / f"video{suffix}"
-    video_path.write_bytes(content)
-
-    artifact_dir = store.artifacts_dir / job_id
-    artifact_dir.mkdir(parents=True, exist_ok=True)
-    frame_path = artifact_dir / "frame_0.jpg"
-    frame_path.write_bytes(PLACEHOLDER_JPEG)
-
     summary = generate_first_workflow_stats(job_id, len(content))
-    store.save_analytics(summary)
+    video_url = store.save_video(job_id, suffix, content)
+    frame_zero_url = store.save_frame_zero(job_id, PLACEHOLDER_JPEG)
+    analytics_summary_url = store.save_analytics(summary)
 
     job = Job(
         job_id=job_id,
@@ -64,9 +56,9 @@ async def create_upload_job(video: UploadFile, label: str | None, sport: str) ->
         sport=sport,
         original_filename=original_filename,
         file_size_bytes=len(content),
-        video_url=f"file://{video_path}",
-        frame_zero_url=f"file://{frame_path}",
-        analytics_summary_url=f"file://{store.analytics_path(job_id)}",
+        video_url=video_url,
+        frame_zero_url=frame_zero_url,
+        analytics_summary_url=analytics_summary_url,
         created_at=created_at,
         updated_at=store.now(),
     )
