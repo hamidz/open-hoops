@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, "phase/**", "fix/**", "docs/**", "chore/**"]
+    branches: [main, "phase/**", "fix/**", "docs/**", "chore/**", "copilot/**"]
   pull_request:
     branches: [main]
 
@@ -27,14 +27,17 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install ruff and mypy
-        run: pip install ruff mypy
+      - name: Install dependencies
+        run: pip install -r apps/api/requirements-dev.txt
 
       - name: ruff check
-        run: ruff check apps/api/ services/ || true  # Warn until Phase 01 scaffolding exists
+        run: ruff check apps/api/ services/
 
       - name: ruff format check
-        run: ruff format --check apps/api/ services/ || true
+        run: ruff format --check apps/api/ services/
+
+      - name: mypy
+        run: mypy apps/api/app/ services/cv_worker/pipeline/ services/analytics_worker/analytics/ services/llm_service/llm/
 
   # ─────────────────────────────────────────────
   # Frontend Lint
@@ -51,19 +54,16 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: apps/web/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: cd apps/web && npm ci
-        continue-on-error: true  # Before Phase 01 scaffolding
+        run: npm ci
 
       - name: ESLint
-        run: cd apps/web && npm run lint
-        continue-on-error: true
+        run: npm run lint --workspace web
 
       - name: TypeScript check
-        run: cd apps/web && npx tsc --noEmit
-        continue-on-error: true
+        run: npm exec --workspace web -- tsc --noEmit
 
   # ─────────────────────────────────────────────
   # Python Tests
@@ -74,31 +74,6 @@ jobs:
     needs: lint-python
     permissions:
       contents: read
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: openhoops
-          POSTGRES_PASSWORD: testpassword
-          POSTGRES_DB: openhoops_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U openhoops"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
 
@@ -107,39 +82,29 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install test dependencies (API)
-        run: |
-          if [ -f apps/api/requirements-dev.txt ]; then
-            pip install -r apps/api/requirements-dev.txt
-          fi
-        continue-on-error: true
+      - name: Install API test dependencies
+        run: pip install -r apps/api/requirements-dev.txt
+
+      - name: Install CV worker test dependencies
+        run: pip install -r services/cv_worker/requirements-dev.txt
+
+      - name: Install analytics worker test dependencies
+        run: pip install -r services/analytics_worker/requirements-dev.txt
+
+      - name: Install LLM service test dependencies
+        run: pip install -r services/llm_service/requirements-dev.txt
 
       - name: Run API tests
-        env:
-          DATABASE_URL: postgresql+asyncpg://openhoops:testpassword@localhost:5432/openhoops_test
-          REDIS_URL: redis://localhost:6379/0
-        run: |
-          if [ -d apps/api/tests ]; then
-            pytest apps/api/tests/ -v --tb=short
-          else
-            echo "No API tests yet (Phase 01 pending)"
-          fi
+        run: pytest apps/api/tests/ -v --tb=short
 
       - name: Run CV Worker tests
-        run: |
-          if [ -d services/cv_worker/tests ]; then
-            pytest services/cv_worker/tests/ -v --tb=short
-          else
-            echo "No CV Worker tests yet (Phase 05 pending)"
-          fi
+        run: pytest services/cv_worker/tests/ -v --tb=short
 
       - name: Run Analytics Worker tests
-        run: |
-          if [ -d services/analytics_worker/tests ]; then
-            pytest services/analytics_worker/tests/ -v --tb=short
-          else
-            echo "No Analytics Worker tests yet (Phase 09 pending)"
-          fi
+        run: pytest services/analytics_worker/tests/ -v --tb=short
+
+      - name: Run LLM Service tests
+        run: pytest services/llm_service/tests/ -v --tb=short
 
   # ─────────────────────────────────────────────
   # Frontend Tests
@@ -157,20 +122,13 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: apps/web/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: cd apps/web && npm ci
-        continue-on-error: true
+        run: npm ci
 
       - name: Run tests
-        run: |
-          if [ -f apps/web/package.json ]; then
-            cd apps/web && npm test -- --run
-          else
-            echo "No frontend app yet (Phase 01 pending)"
-          fi
-        continue-on-error: true
+        run: npm test --workspace web -- --run
 
   # ─────────────────────────────────────────────
   # TypeScript Type Sync Check (ADR-010, ADR-015)
@@ -188,28 +146,15 @@ jobs:
           python-version: "3.11"
 
       - name: Install type generation dependencies
-        run: |
-          if [ -f packages/shared_types/requirements.txt ]; then
-            pip install -r packages/shared_types/requirements.txt
-          fi
-        continue-on-error: true
+        run: pip install -r packages/shared_types/requirements.txt
 
       - name: Generate TypeScript types
-        run: |
-          if [ -f packages/shared_types/generate_types.py ]; then
-            python packages/shared_types/generate_types.py
-          else
-            echo "Type generation not yet implemented (Phase 01 pending)"
-          fi
-        continue-on-error: true
+        run: python packages/shared_types/generate_types.py
 
       - name: Check for type drift
         run: |
-          if [ -d packages/shared_types/types ]; then
-            git diff --exit-code packages/shared_types/types/ || \
-              (echo "ERROR: TypeScript types are out of sync. Run 'make generate-types' locally and commit the result." && exit 1)
-          fi
-        continue-on-error: true  # Remove continue-on-error after Phase 01
+          git diff --exit-code packages/shared_types/types/ || \
+            (echo "ERROR: TypeScript types are out of sync. Run 'make generate-types' locally and commit the result." && exit 1)
 
   # ─────────────────────────────────────────────
   # Docker Compose Config Validation

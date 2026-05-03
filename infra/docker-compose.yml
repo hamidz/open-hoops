@@ -20,6 +20,8 @@ volumes:
     name: open_hoops_minio_data
   ollama_data:
     name: open_hoops_ollama_data
+  app_data:
+    name: open_hoops_app_data
 
 # ─────────────────────────────────────────────
 # Infrastructure Services
@@ -158,6 +160,9 @@ services:
       SIGNED_URL_EXPIRY_FRAME_MINUTES: ${SIGNED_URL_EXPIRY_FRAME_MINUTES:-30}
       SIGNED_URL_EXPIRY_TELEMETRY_HOURS: ${SIGNED_URL_EXPIRY_TELEMETRY_HOURS:-24}
       SIGNED_URL_EXPIRY_ARTIFACT_HOURS: ${SIGNED_URL_EXPIRY_ARTIFACT_HOURS:-1}
+      OPEN_HOOPS_DATA_DIR: /data/open-hoops
+    volumes:
+      - app_data:/data/open-hoops
     ports:
       - "8000:8000"
     networks:
@@ -182,8 +187,8 @@ services:
 
   web:
     build:
-      context: ../apps/web
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: apps/web/Dockerfile
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}

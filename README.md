@@ -6,9 +6,9 @@
 
 ## Project Status
 
-Planning / documentation-first.
+Runnable first-workflow MVP scaffold.
 
-This repository starts as an **agentic solo project** managed through Markdown artifacts before implementation begins.
+The repository now includes a Dockerized FastAPI backend, Next.js frontend, shared types, worker stubs, and a local upload-to-stats workflow. The broader CV, calibration, heatmap, annotation, and LLM phases remain guided by the Markdown phase plans.
 
 ## Mission
 
@@ -45,7 +45,6 @@ Upload a fixed sideline basketball video, manually calibrate the court, process 
 
 ## Repository Intent
 
-This repo currently contains planning, execution, and documentation scaffolding only.
-Implementation should begin only after the owner confirms the key inputs in `INPUTS_NEEDED.md`.
+This repo contains both the planning artifacts and a minimal runnable implementation. From a fresh clone, configure `.env`, run setup, open the web app, upload an `.mp4`/`.mov`, and view generated first-pass stats.
 
-Before coding begins, the owner should also review the product requirements, UX flows, API contract, security/privacy checklist, and testing strategy listed in `docs/README.md`.
+The implementation intentionally uses generated/mock analytics for the first workflow; production CV processing remains in the later phase plans.

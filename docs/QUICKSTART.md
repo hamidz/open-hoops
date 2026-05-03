@@ -117,9 +117,22 @@ If any check fails, see the **Troubleshooting** section below.
 | API Docs (Swagger) | http://localhost:8000/docs |
 | MinIO Console | http://localhost:9001 |
 
+
 ---
 
-## 7. Seed Mock Data (Optional — Phase 03+)
+## 7. Run Your First Workflow
+
+1. Open http://localhost:3000.
+2. Click **Start first workflow** or go directly to http://localhost:3000/upload.
+3. Upload an `.mp4` or `.mov` basketball clip and optionally add a label.
+4. After upload, Open Hoops redirects to the job detail page. The MVP marks the job complete and shows generated first-pass player/team stats.
+5. Return to http://localhost:3000/dashboard to review uploaded jobs.
+
+> Current MVP note: stats are generated from a deterministic mock analytics pipeline so the full local workflow is usable before the real CV engine phases are complete.
+
+---
+
+## 8. Seed Mock Data (Optional)
 
 After Phase 03 is implemented, you can seed the dashboard with synthetic data:
 
