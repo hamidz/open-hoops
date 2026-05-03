@@ -31,6 +31,7 @@ def test_upload_to_stats_workflow(tmp_path: Path, monkeypatch) -> None:  # type:
     job = client.get(f"/api/v1/jobs/{job_id}")
     assert job.status_code == 200
     assert job.json()["status"] == "complete"
+    assert job.json()["frame_zero_url"].endswith("frame_0.jpg")
     analytics = client.get(f"/api/v1/jobs/{job_id}/analytics")
     assert analytics.status_code == 200
     assert len(analytics.json()["players"]) == 10

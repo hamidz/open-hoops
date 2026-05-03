@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from base64 import b64decode
 from pathlib import Path
 from uuid import uuid4
 
@@ -11,6 +12,9 @@ from app.services.analytics import generate_first_workflow_stats
 from app.services.store import store
 
 ALLOWED_EXTENSIONS = {".mp4", ".mov"}
+PLACEHOLDER_JPEG = b64decode(
+    "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAH/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAEFAqf/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/ASP/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/ASP/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAY/Al//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/IV//2gAMAwEAAgADAAAAEP/EABQRAQAAAAAAAAAAAAAAAAAAABD/2gAIAQMBAT8QP//EABQRAQAAAAAAAAAAAAAAAAAAABD/2gAIAQIBAT8QP//EABQQAQAAAAAAAAAAAAAAAAAAABD/2gAIAQEAAT8QP//Z"
+)
 
 
 def validate_upload(filename: str, size: int) -> None:
@@ -45,11 +49,8 @@ async def create_upload_job(video: UploadFile, label: str | None, sport: str) ->
 
     artifact_dir = store.artifacts_dir / job_id
     artifact_dir.mkdir(parents=True, exist_ok=True)
-    frame_path = artifact_dir / "frame_0.txt"
-    frame_path.write_text(
-        "Frame-zero placeholder: calibration image extraction is implemented in Phase 06.\n",
-        encoding="utf-8",
-    )
+    frame_path = artifact_dir / "frame_0.jpg"
+    frame_path.write_bytes(PLACEHOLDER_JPEG)
 
     summary = generate_first_workflow_stats(job_id, len(content))
     store.save_analytics(summary)

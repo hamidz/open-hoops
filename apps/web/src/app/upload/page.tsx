@@ -41,6 +41,7 @@ export default function UploadPage() {
     form.append("video", file);
     form.append("label", label);
     form.append("sport", "basketball");
+    // Fetch does not expose upload progress events; XHR keeps the MVP progress bar accurate.
     const request = new XMLHttpRequest();
     request.upload.onprogress = (event) => {
       if (event.lengthComputable) setProgress(Math.round((event.loaded / event.total) * 100));

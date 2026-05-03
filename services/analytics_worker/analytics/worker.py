@@ -16,6 +16,7 @@ class WorkerSettings:
 
 
 async def main() -> None:
+    # Keep the Docker service alive until the real ARQ worker is wired in a later phase.
     while True:
         await asyncio.sleep(3600)
 

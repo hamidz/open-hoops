@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, status
 
 from app.models import AnalyticsSummary, Job, UploadResponse
+from app.services.analytics import generate_first_workflow_stats
 from app.services.store import store
 from app.services.uploads import create_upload_job
 
@@ -59,9 +60,14 @@ def retry_job(job_id: str) -> Job:
             status_code=409,
             detail={"error": "invalid_state", "detail": "Only failed jobs can be retried."},
         )
+    job.status = "processing"
+    job.progress_pct = 50
+    job.error_message = None
+    summary = generate_first_workflow_stats(job.job_id, job.file_size_bytes)
+    store.save_analytics(summary)
     job.status = "complete"
     job.progress_pct = 100
-    job.error_message = None
+    job.analytics_summary_url = f"file://{store.analytics_path(job.job_id)}"
     job.updated_at = store.now()
     store.save_job(job)
     return job
