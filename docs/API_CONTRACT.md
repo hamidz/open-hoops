@@ -6,7 +6,7 @@
 
 ## 1. Conventions
 
-- Base path: `/api`.
+- Base path: `/api/v1` (versioned from day one — see ADR-013).
 - Payloads are JSON unless an endpoint explicitly uses multipart upload or returns an image/download URL.
 - IDs are UUID strings.
 - Timestamps are ISO 8601 UTC strings.
@@ -51,7 +51,7 @@ Frontend code must display `detail` or a friendlier mapped message, never raw st
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/health` | Service health, dependency status, and version info |
+| GET | `/api/v1/health` | Service health, dependency status, and version info |
 
 Response:
 
@@ -74,13 +74,13 @@ Response:
 
 | Method | Path | Purpose |
 |---|---|---|
-| POST | `/api/jobs/upload` | Upload video, create job, enqueue processing |
-| GET | `/api/jobs` | List jobs, newest first, paginated |
-| GET | `/api/jobs/{job_id}` | Get full job record |
-| POST | `/api/jobs/{job_id}/retry` | Requeue a failed job |
-| DELETE | `/api/jobs/{job_id}` | Delete job and related artifacts |
+| POST | `/api/v1/jobs/upload` | Upload video, create job, enqueue processing |
+| GET | `/api/v1/jobs` | List jobs, newest first, paginated |
+| GET | `/api/v1/jobs/{job_id}` | Get full job record |
+| POST | `/api/v1/jobs/{job_id}/retry` | Requeue a failed job |
+| DELETE | `/api/v1/jobs/{job_id}` | Delete job and related artifacts |
 
-### `POST /api/jobs/upload`
+### `POST /api/v1/jobs/upload`
 
 Multipart form fields:
 
@@ -112,10 +112,10 @@ State notes:
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/jobs/{job_id}/calibration/frame` | Return signed/proxied URL for frame-zero JPEG |
-| GET | `/api/jobs/{job_id}/calibration` | Return saved calibration state |
-| POST | `/api/jobs/{job_id}/calibration` | Save points, compute homography, update job |
-| DELETE | `/api/jobs/{job_id}/calibration` | Reset calibration |
+| GET | `/api/v1/jobs/{job_id}/calibration/frame` | Return signed/proxied URL for frame-zero JPEG |
+| GET | `/api/v1/jobs/{job_id}/calibration` | Return saved calibration state |
+| POST | `/api/v1/jobs/{job_id}/calibration` | Save points, compute homography, update job |
+| DELETE | `/api/v1/jobs/{job_id}/calibration` | Reset calibration |
 
 `POST /api/jobs/{job_id}/calibration` request:
 
@@ -151,20 +151,31 @@ Success response:
 
 ## 7. Telemetry and Debug Artifacts
 
+### Telemetry Size Strategy
+
+> ⚠️ **Telemetry files can be very large.** A 2-hour game at 30fps sampled every 3rd frame produces ~150 MB of JSON. Direct endpoint response is not feasible for large jobs.
+
+**All telemetry endpoints default to returning a signed download URL, not inline JSON.** The client downloads the file directly from MinIO using the signed URL. This is not optional — it is the default behavior.
+
+Signed URL expiry for telemetry downloads: **24 hours** (configurable via `SIGNED_URL_EXPIRY_TELEMETRY_HOURS`).
+
+For frame-level queries (single frame detections), inline JSON is acceptable.
+
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/jobs/{job_id}/telemetry` | Return telemetry JSON or signed download URL |
-| GET | `/api/jobs/{job_id}/telemetry/metadata` | Return video metadata only |
-| GET | `/api/jobs/{job_id}/telemetry/frame/{frame_index}` | Return detections for one sampled frame |
-| GET | `/api/jobs/{job_id}/debug/frames` | List available debug frame URLs |
-| GET | `/api/jobs/{job_id}/debug/frames/{frame_index}` | Return signed/proxied debug frame image URL |
+| GET | `/api/v1/jobs/{job_id}/telemetry` | Return signed download URL for full telemetry JSON |
+| GET | `/api/v1/jobs/{job_id}/telemetry/metadata` | Return video metadata only (inline JSON) |
+| GET | `/api/v1/jobs/{job_id}/telemetry/frame/{frame_index}` | Return detections for one sampled frame (inline JSON) |
+| GET | `/api/v1/jobs/{job_id}/debug/frames` | List available debug frame URLs |
+| GET | `/api/v1/jobs/{job_id}/debug/frames/{frame_index}` | Return signed debug frame image URL |
 
-Large telemetry responses may return:
+All telemetry responses return:
 
 ```json
 {
-  "download_url": "signed-or-proxied-url",
-  "expires_at": "ISO8601"
+  "download_url": "http://localhost:9000/telemetry/{job_id}/telemetry.json?...",
+  "expires_at": "ISO8601",
+  "file_size_bytes": 157286400
 }
 ```
 
@@ -174,10 +185,10 @@ Large telemetry responses may return:
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/jobs/{job_id}/analytics` | Return full analytics summary |
-| GET | `/api/jobs/{job_id}/analytics/players/{track_id}` | Return one player's metrics |
-| GET | `/api/jobs/{job_id}/analytics/teams` | Return team metrics |
-| POST | `/api/jobs/{job_id}/analytics/recompute` | Queue analytics recomputation |
+| GET | `/api/v1/jobs/{job_id}/analytics` | Return full analytics summary (inline JSON — ~50 KB max) |
+| GET | `/api/v1/jobs/{job_id}/analytics/players/{track_id}` | Return one player's metrics |
+| GET | `/api/v1/jobs/{job_id}/analytics/teams` | Return team metrics |
+| POST | `/api/v1/jobs/{job_id}/analytics/recompute` | Queue analytics recomputation |
 
 `POST /analytics/recompute` returns `202` when accepted.
 
@@ -187,10 +198,10 @@ Large telemetry responses may return:
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/jobs/{job_id}/heatmaps` | List player/team heatmaps |
-| GET | `/api/jobs/{job_id}/heatmaps/{track_id}` | Return player heatmap grid JSON |
-| GET | `/api/jobs/{job_id}/heatmaps/{track_id}/image` | Return player heatmap PNG URL |
-| GET | `/api/jobs/{job_id}/heatmaps/team/{team}` | Return team heatmap grid JSON |
+| GET | `/api/v1/jobs/{job_id}/heatmaps` | List player/team heatmaps |
+| GET | `/api/v1/jobs/{job_id}/heatmaps/{track_id}` | Return player heatmap grid JSON |
+| GET | `/api/v1/jobs/{job_id}/heatmaps/{track_id}/image` | Return player heatmap PNG URL (signed, 5 min expiry) |
+| GET | `/api/v1/jobs/{job_id}/heatmaps/team/{team}` | Return team heatmap grid JSON |
 
 Optional query parameters:
 
@@ -206,12 +217,12 @@ Optional query parameters:
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/jobs/{job_id}/annotations` | Return all annotations |
-| PUT | `/api/jobs/{job_id}/annotations/players/{track_id}` | Upsert player label/team/flag |
-| POST | `/api/jobs/{job_id}/annotations/shots` | Add shot annotation |
-| DELETE | `/api/jobs/{job_id}/annotations/shots/{shot_id}` | Delete shot annotation |
-| PUT | `/api/jobs/{job_id}/annotations/team-colors` | Update team colors |
-| POST | `/api/jobs/{job_id}/annotations/recompute` | Queue analytics recomputation using annotations |
+| GET | `/api/v1/jobs/{job_id}/annotations` | Return all annotations |
+| PUT | `/api/v1/jobs/{job_id}/annotations/players/{track_id}` | Upsert player label/team/flag |
+| POST | `/api/v1/jobs/{job_id}/annotations/shots` | Add shot annotation |
+| DELETE | `/api/v1/jobs/{job_id}/annotations/shots/{shot_id}` | Delete shot annotation |
+| PUT | `/api/v1/jobs/{job_id}/annotations/team-colors` | Update team colors |
+| POST | `/api/v1/jobs/{job_id}/annotations/recompute` | Queue analytics recomputation using annotations |
 
 Player upsert request:
 
@@ -232,9 +243,9 @@ Shot annotation creation returns the created shot with a generated `shot_id`.
 
 | Method | Path | Purpose |
 |---|---|---|
-| POST | `/api/jobs/{job_id}/report/generate` | Queue local LLM report generation |
-| GET | `/api/jobs/{job_id}/report` | Return generated report |
-| DELETE | `/api/jobs/{job_id}/report` | Delete report so it can be regenerated |
+| POST | `/api/v1/jobs/{job_id}/report/generate` | Queue local LLM report generation |
+| GET | `/api/v1/jobs/{job_id}/report` | Return generated report |
+| DELETE | `/api/v1/jobs/{job_id}/report` | Delete report so it can be regenerated |
 
 `POST /report/generate` returns:
 
@@ -264,6 +275,39 @@ Rules:
 
 ---
 
-## 13. Future Auth Note
+## 13. Signed URL Expiry Policy
 
-MVP is local-first and single-user. If cloud or multi-user support is added later, this contract must be revised before implementation to include authentication, authorization, ownership checks, and audit logging.
+| Artifact Type | Expiry | Rationale |
+|---|---|---|
+| Frame-zero JPEG (calibration) | 30 minutes | User is actively on calibration page |
+| Debug frame images | 30 minutes | Short interactive session |
+| Heatmap PNG | 1 hour | Download/view session |
+| Telemetry JSON download | 24 hours | Large file, may take time to download |
+| Analytics summary | 1 hour | Dashboard viewing session |
+| Coaching report | 1 hour | Reading session |
+
+Signed URL expiry durations are configurable via environment variables (e.g., `SIGNED_URL_EXPIRY_FRAME_MINUTES=30`). Never log signed URLs.
+
+---
+
+## 14. CORS Policy
+
+The FastAPI app must configure CORS for local development. Configured via `CORSMiddleware`:
+
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,  # default: ["http://localhost:3000"]
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+    allow_credentials=False,  # no auth cookies in MVP
+)
+```
+
+`ALLOWED_ORIGINS` is an env var. Default: `http://localhost:3000`. Must not be `*` even in development.
+
+---
+
+## 15. Future Auth Note
+
+MVP is local-first and single-user. If cloud or multi-user support is added later, this contract must be revised before implementation to include authentication, authorization, ownership checks, and audit logging. API versioning (`/api/v1/`) ensures a clean break to `/api/v2/` for this change.
