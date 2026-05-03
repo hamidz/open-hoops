@@ -11,7 +11,16 @@
 ## Prerequisites
 
 - Phase 04 complete (video upload, job record exists).
-- Phase 05 in progress or complete (calibration feeds into the CV pipeline).
+- Phase 05 CV worker homography module (`pipeline/homography.py`) may begin development concurrently — calibration feeds the CV pipeline. Phase 06 backend (homography computation) should be completed **before** Phase 05 integration testing, so the CV worker can use a real computed homography matrix rather than a hardcoded one.
+
+**Recommended dependency order:**
+```
+Phase 06 — Backend Only (homography.py + API endpoints + tests)
+      ↓
+Phase 05 — CV Engine (uses real calibration from Phase 06 backend)
+      ↕ (concurrent)
+Phase 06 — Frontend UI (CalibrationCanvas + CourtReferencePanel)
+```
 
 ---
 
@@ -19,6 +28,8 @@
 
 Read `ARCHITECTURE.md` for the calibration data flow and homography schema.
 Read `docs/ADR.md` ADR-008 for the decision to use manual calibration.
+Read `docs/DESIGN_SYSTEM.md` Section 5.4 for calibration point marker visual spec.
+Read `docs/UX_FLOWS.md` Sections 11 and 12 for the calibration interaction flow and keyboard shortcuts.
 
 Your job is to implement the calibration UI and the homography computation backend. This is the most UX-critical feature in the MVP — it must be intuitive and forgiving.
 
@@ -45,7 +56,7 @@ Standard calibration points (use at least 4, recommend 6–8):
 | Right free throw line right | [22.86, 13.41] |
 | Center circle center | [14.325, 7.62] |
 
-The calibration tool should provide a reference court diagram with these points labeled so the user knows which point to click.
+The calibration tool should provide a reference court diagram with these points labeled so the user knows which point to click. The exact UX interaction flow is specified in `docs/UX_FLOWS.md` Section 11. The visual design of markers and the reference panel is specified in `docs/DESIGN_SYSTEM.md` Section 5.4.
 
 ---
 
@@ -53,8 +64,8 @@ The calibration tool should provide a reference court diagram with these points 
 
 ### API — Calibration Endpoints
 
-- [ ] `GET /api/jobs/{job_id}/calibration/frame` — return the first frame of the video as a JPEG image URL (stored in MinIO).
-- [ ] `POST /api/jobs/{job_id}/calibration` — accept calibration point pairs and compute homography:
+- [ ] `GET /api/v1/jobs/{job_id}/calibration/frame` — return the first frame of the video as a JPEG image URL (stored in MinIO, signed URL, 30-minute expiry).
+- [ ] `POST /api/v1/jobs/{job_id}/calibration` — accept calibration point pairs and compute homography:
 
 ```json
 {
@@ -72,8 +83,8 @@ The calibration tool should provide a reference court diagram with these points 
 - [ ] Update job status to `queued` (ready for CV processing) if previously `calibration_needed`.
 - [ ] Return computed matrix and reprojection error estimate.
 
-- [ ] `GET /api/jobs/{job_id}/calibration` — return current calibration state (points + matrix if computed).
-- [ ] `DELETE /api/jobs/{job_id}/calibration` — reset calibration (allow redo).
+- [ ] `GET /api/v1/jobs/{job_id}/calibration` — return current calibration state (points + matrix if computed).
+- [ ] `DELETE /api/v1/jobs/{job_id}/calibration` — reset calibration (allow redo).
 
 ### Frame Extraction for Calibration
 

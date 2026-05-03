@@ -42,53 +42,52 @@ Your job is to implement `infra/docker-compose.yml` and all service Dockerfiles 
 
 ### Docker Compose
 
-- [ ] Write `infra/docker-compose.yml` with all services above.
-- [ ] Define a shared `app-network` bridge network.
-- [ ] Define named volumes: `postgres_data`, `redis_data`, `minio_data`, `ollama_data`.
-- [ ] Configure all service `depends_on` relationships correctly.
-- [ ] Add health checks for `postgres`, `redis`, `minio`.
+- [ ] `infra/docker-compose.yml` already created — review against Phase 02 requirements.
+- [ ] All services include `healthcheck` definitions _(already included in template)_.
+- [ ] All services include `deploy.resources.limits` memory caps _(already included — see `ARCHITECTURE.md` Section 2.8)_.
+- [ ] Named volumes use `name:` prefix: `open_hoops_postgres_data`, etc. _(already in template)_.
+- [ ] `minio-init` container creates `videos`, `telemetry`, and `artifacts` buckets _(already in template)_.
 
 ### Environment Variables
 
-- [ ] Write `infra/.env.example` with all required variables:
-  - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
-  - `REDIS_URL`
-  - `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `MINIO_ENDPOINT`
-  - `OLLAMA_HOST`
-  - `API_URL` (for frontend)
+- [x] Root `.env.example` documents all required variables _(created)_.
 - [ ] Confirm `.env` is in `.gitignore`.
 
 ### PostgreSQL
 
 - [ ] Create initial DB schema migration (Alembic):
   - `jobs` table: `job_id` (UUID PK), `status`, `video_url`, `created_at`, `updated_at`
-  - Additional columns: `calibration_json`, `telemetry_url`, `analytics_summary_url`, `report_url`
+  - Additional columns: `calibration_json`, `telemetry_url`, `analytics_summary_url`, `report_url`, `progress_pct`
 - [ ] Alembic `env.py` reads `DATABASE_URL` from environment.
+
+### Redis Persistence
+
+- [x] Redis RDB persistence configured in `docker-compose.yml` (`save 900 1 300 10 60 10000`) _(already in template)_.
+- [ ] Test: stop Redis, restart it, confirm queued ARQ jobs survive restart.
 
 ### MinIO
 
-- [ ] Add MinIO startup script or init container to create default buckets:
-  - `videos`
-  - `telemetry`
-  - `artifacts`
+- [x] `minio-init` container handles bucket creation _(already in docker-compose.yml)_.
 
 ### API Health Check
 
-- [ ] Implement `GET /health` endpoint in FastAPI that checks connectivity to:
-  - PostgreSQL
-  - Redis
-  - MinIO
+- [ ] Implement `GET /api/v1/health` endpoint in FastAPI that checks PostgreSQL, Redis, MinIO, and Ollama.
 
-### Task Queue
+### Task Queue (ARQ — Decided, ADR-012)
 
-- [ ] Decide and implement: ARQ or Celery (see ADR note in `docs/ADR.md`).
-- [ ] Worker services read jobs from Redis queue.
-- [ ] Implement a `noop` job type that workers can process as a connectivity test.
+- [ ] **ARQ is the task queue.** Celery is not used.
+- [ ] Install ARQ in each worker service: `pip install arq`
+- [ ] Each worker service (`cv_worker`, `analytics_worker`, `llm_service`) defines an ARQ `WorkerSettings` class
+- [ ] Workers register job handlers as async functions: `async def process_video(ctx, job_id: str) -> None:`
+- [ ] API enqueues jobs using `arq.connections.create_pool(RedisSettings.from_url(REDIS_URL))`
+- [ ] Implement a `noop` job type that workers can process as a connectivity test: `async def noop(ctx) -> None: pass`
+- [ ] ARQ worker healthcheck: `redis-cli -n 1 llen arq:queue:main | grep -v "^0"`
 
 ### Validation
 
-- [ ] `docker compose up` starts all services without error.
-- [ ] `curl http://localhost:8000/health` returns `200 OK` with all services healthy.
+- [ ] `docker compose -f infra/docker-compose.yml up --build` starts all services without error.
+- [ ] `curl http://localhost:8000/api/v1/health` returns `200 OK` with all services healthy.
+- [ ] `./scripts/check_health.sh` passes all 7 checks.
 - [ ] MinIO console accessible at `http://localhost:9001`.
 - [ ] Ollama responds to `curl http://localhost:11434/api/tags`.
 
@@ -107,8 +106,8 @@ Your job is to implement `infra/docker-compose.yml` and all service Dockerfiles 
 
 ## Definition of Done
 
-- [ ] `docker compose up --build` succeeds with no exit errors.
-- [ ] `GET /health` returns HTTP 200 with all checks passing.
+- [ ] `docker compose -f infra/docker-compose.yml up --build` succeeds with no exit errors.
+- [ ] `GET /api/v1/health` returns HTTP 200 with all checks passing.
 - [ ] All tasks above checked off.
 - [ ] Phase status updated in `AGENTIC_EXECUTION_PLAN.md`.
 

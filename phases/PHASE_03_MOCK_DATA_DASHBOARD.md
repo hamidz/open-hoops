@@ -17,6 +17,8 @@
 ## Agent Instructions
 
 Read `ARCHITECTURE.md` for the telemetry and analytics summary schemas before starting.
+Read `docs/DESIGN_SYSTEM.md` before writing any CSS or component code — all visual decisions are pre-defined.
+Read `docs/UX_FLOWS.md` for the onboarding flow, loading skeleton specs, and navigation structure.
 
 Your job is to build the frontend dashboard and the mock data pipeline that feeds it. The goal is a working UI that the owner can use to validate that the visualizations, layout, and output format meet their needs — before any real CV code is written.
 
@@ -65,42 +67,85 @@ Compute or hard-code:
 
 ### API Endpoints
 
-Implement the following read-only endpoints in `apps/api`:
+Implement the following read-only endpoints in `apps/api` (use `/api/v1/` prefix — ADR-013):
 
-- [ ] `GET /api/jobs` — list all jobs (returns mock job).
-- [ ] `GET /api/jobs/{job_id}` — get job details.
-- [ ] `GET /api/jobs/{job_id}/telemetry` — return telemetry JSON.
-- [ ] `GET /api/jobs/{job_id}/analytics` — return analytics summary JSON.
+- [ ] `GET /api/v1/jobs` — list all jobs (returns mock job).
+- [ ] `GET /api/v1/jobs/{job_id}` — get job details.
+- [ ] `GET /api/v1/jobs/{job_id}/telemetry` — return signed download URL (not inline JSON — see telemetry strategy in `docs/API_CONTRACT.md` Section 7).
+- [ ] `GET /api/v1/jobs/{job_id}/telemetry/frame/{frame_index}` — return inline detections for one frame.
+- [ ] `GET /api/v1/jobs/{job_id}/analytics` — return analytics summary (inline JSON).
 
 ### Frontend Dashboard
 
 Build in `apps/web`:
 
+#### Providers and State Setup
+
+- [ ] Confirm `src/app/providers.tsx` wraps the app in `QueryClientProvider` (from Phase 01 scaffold).
+- [ ] Configure `QueryClient` with sensible defaults:
+  ```ts
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 10_000,       // 10 seconds
+        retry: 2,
+        refetchOnWindowFocus: true,
+      }
+    }
+  })
+  ```
+- [ ] Create a `useJobStatus` hook using TanStack Query that polls job status:
+  ```ts
+  useQuery({
+    queryKey: ['job', jobId],
+    queryFn: () => fetchJob(jobId),
+    refetchInterval: (query) => {
+      // Stop polling when job reaches terminal state
+      const status = query.state.data?.status
+      return status === 'complete' || status === 'failed' ? false : 3000
+    }
+  })
+  ```
+  This replaces the fragile `setInterval`/`useEffect` pattern and is reusable in Phase 04.
+
 #### Layout
 
-- [ ] Sidebar navigation: Jobs list, Dashboard, Settings (placeholder).
+- [ ] Sidebar navigation: Jobs list, Upload (Phase 04 placeholder), Settings (placeholder).
+- [ ] Sidebar: 240px fixed width on desktop; collapses to icon mode on 1024px screens.
 - [ ] Main content area with tab navigation: Overview | Court Map | Players | Report.
+
+#### Design System Application
+
+- [ ] Apply `docs/DESIGN_SYSTEM.md` color tokens via Tailwind config (dark mode default).
+- [ ] Use Inter Variable + JetBrains Mono fonts loaded via `next/font/google`.
+- [ ] All stat numbers use `font-mono` class with tabular numerics.
 
 #### Overview Tab
 
-- [ ] Job status badge (Queued / Processing / Complete / Failed).
-- [ ] Key stats cards: total players, game duration, team spacing average.
-- [ ] Per-player stats table: Track ID, label, distance, avg speed, coverage %.
+- [ ] `JobStatusBadge` component — animated status badge using shadcn/ui `Badge` + Lucide icon.
+- [ ] Skeleton loading state for all cards while data fetches.
+- [ ] Key stats cards (shadcn/ui `Card`): total players, game duration, team spacing average.
+- [ ] Per-player stats table (shadcn/ui `Table`): Track ID, label, distance, avg speed, coverage %.
+- [ ] Empty state: display when no jobs exist (link to upload).
 
 #### Court Map Tab
 
-- [ ] SVG basketball court (full-court or half-court toggle).
-- [ ] Court dimensions based on confirmed inputs (NBA default).
-- [ ] Player position scatter for a selected frame (scrubber bar for frame selection).
-- [ ] Team color coding (home = blue, away = red as default).
+- [ ] `CourtSVG` component with visual spec from `docs/DESIGN_SYSTEM.md` Section 5.
+- [ ] Court surface: dark background (`court-800`); court lines: `court-600`.
+- [ ] Player markers: circle with team color, track number label.
+- [ ] Full-court and half-court orientations.
+- [ ] `FrameScrubber` component — shadcn/ui `Slider` with frame index display.
+- [ ] Keyboard: `←`/`→` arrows step frames; `Space` plays/pauses.
+- [ ] Skeleton: court-shaped rectangle while telemetry downloads from MinIO.
 
 #### Players Tab
 
-- [ ] Per-player card: track ID, team, distance, speed, zone distribution bar chart.
+- [ ] Per-player `Card` with: track ID, team badge, distance (JetBrains Mono), speed, `ZoneBar` component.
+- [ ] `ZoneBar`: horizontal bar split into paint / mid-range / three-point segments, team color tint.
 
 #### Report Tab
 
-- [ ] Placeholder: "LLM coaching report will appear here after Phase 10."
+- [ ] Placeholder card: "LLM coaching report will appear here after Phase 10." with Lucide `FileText` icon.
 
 ---
 
