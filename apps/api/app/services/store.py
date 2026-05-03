@@ -46,8 +46,6 @@ class JsonStore:
     def list_jobs(self) -> list[Job]:
         jobs: list[Job] = []
         for path in self.jobs_dir.glob("*.json"):
-            if path.suffix == ".tmp":
-                continue
             try:
                 jobs.append(Job.model_validate_json(path.read_text(encoding="utf-8")))
             except Exception:
