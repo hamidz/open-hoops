@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# Default minimal permissions for all jobs
+permissions:
+  contents: read
+
 jobs:
   # ─────────────────────────────────────────────
   # Python Lint
@@ -13,6 +17,8 @@ jobs:
   lint-python:
     name: Python Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -36,6 +42,8 @@ jobs:
   lint-frontend:
     name: Frontend Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -64,6 +72,8 @@ jobs:
     name: Python Tests
     runs-on: ubuntu-latest
     needs: lint-python
+    permissions:
+      contents: read
     services:
       postgres:
         image: postgres:16-alpine
@@ -138,6 +148,8 @@ jobs:
     name: Frontend Tests
     runs-on: ubuntu-latest
     needs: lint-frontend
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -166,6 +178,8 @@ jobs:
   check-type-sync:
     name: TypeScript Type Sync
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -203,6 +217,8 @@ jobs:
   validate-compose:
     name: Validate Docker Compose
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
