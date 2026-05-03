@@ -90,7 +90,7 @@ Owner confirms → next phase
 
 | Phase | Name | Status |
 |---|---|---|
-| 00 | [Discovery](./phases/PHASE_00_DISCOVERY.md) | 🔲 Pending |
+| 00 | [Discovery](./phases/PHASE_00_DISCOVERY.md) | ✅ Done |
 | 01 | [Repo Boilerplate](./phases/PHASE_01_REPO_BOILERPLATE.md) | 🔲 Pending |
 | 02 | [Local Dev Stack](./phases/PHASE_02_LOCAL_DEV_STACK.md) | 🔲 Pending |
 | 03 | [Mock Data Dashboard](./phases/PHASE_03_MOCK_DATA_DASHBOARD.md) | 🔲 Pending |

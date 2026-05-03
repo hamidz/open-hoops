@@ -103,9 +103,52 @@
 | Service | Role | Default |
 |---|---|---|
 | PostgreSQL | Job records, analytics data | `postgres:16` |
-| Redis | Job queue, caching | `redis:7` |
+| Redis | Job queue, caching | `redis:7-alpine` |
 | MinIO | Video and artifact file storage | `minio/minio` |
 | Ollama | Local LLM inference | `ollama/ollama` |
+
+### 2.7 CORS Configuration
+
+The FastAPI API must configure CORS to allow requests from the Next.js dev server. This is required even in local operation.
+
+```
+Allowed origins (dev):  http://localhost:3000
+Allowed origins (prod): configured via ALLOWED_ORIGINS env var
+Allowed methods:        GET, POST, PUT, DELETE, OPTIONS
+Allow credentials:      false (MVP is auth-free)
+```
+
+CORS is configured via `fastapi.middleware.cors.CORSMiddleware`. The `ALLOWED_ORIGINS` env var is a comma-separated list, defaulting to `http://localhost:3000` for development.
+
+### 2.8 Docker Compose Resource Limits
+
+To prevent any single service from exhausting system resources, all Docker Compose services must define memory limits. Recommended defaults for the confirmed 64 GB RAM dev machine:
+
+| Service | Memory Limit | Notes |
+|---|---|---|
+| `postgres` | 1 GB | Typical for local dev |
+| `redis` | 512 MB | Queue + cache |
+| `minio` | 2 GB | File storage service |
+| `ollama` | 24 GB | LLM inference (AMD ROCm) |
+| `api` | 1 GB | FastAPI + Pydantic |
+| `web` | 1 GB | Next.js dev server |
+| `cv_worker` | 8 GB | YOLO + ByteTrack frames |
+| `analytics_worker` | 2 GB | Pandas/NumPy |
+| `llm_service` | 512 MB | Prompt construction only |
+
+These are defined in `infra/docker-compose.yml` under each service's `deploy.resources.limits` key.
+
+### 2.9 Redis Persistence
+
+Redis is used for the job queue (ARQ). If Redis restarts without persistence, queued jobs are lost. Configure Redis with **RDB snapshot persistence**:
+
+```
+save 900 1       # Save if at least 1 key changed in 900 seconds
+save 300 10      # Save if at least 10 keys changed in 300 seconds
+save 60 10000    # Save if at least 10000 keys changed in 60 seconds
+```
+
+The `redis_data` named volume persists the RDB snapshot across container restarts.
 
 ---
 
@@ -296,13 +339,45 @@ Decisions already accepted in `docs/ADR.md` include local-first operation, manua
 
 The CV worker supports optional GPU acceleration. Hardware is detected at runtime:
 
-- **NVIDIA CUDA**: Ultralytics YOLO will use CUDA automatically if `torch` detects a GPU and `nvidia-container-toolkit` is installed on the host.
-- **Apple MPS**: Detected automatically on macOS (development only — not supported in Docker).
-- **CPU fallback**: Always available and required for the MVP. Target: ≥ 5 frames/sec on CPU.
+- **AMD ROCm (confirmed primary):** PyTorch ROCm build required. Only available on Linux (WSL2 on Windows). The `docker-compose.gpu.yml` override targets ROCm — see below.
+- **NVIDIA CUDA:** Ultralytics YOLO will use CUDA automatically if `torch` detects a GPU and `nvidia-container-toolkit` is installed on the Docker host.
+- **Apple MPS:** Detected automatically on macOS (development only — not supported in Docker).
+- **CPU fallback:** Always available and required. Target: ≥ 5 frames/sec on CPU.
 
-### Docker GPU Configuration (NVIDIA)
+### AMD ROCm Configuration (Confirmed Hardware Path)
 
-To enable GPU pass-through in Docker Compose, add a `deploy` section to the `cv_worker` service:
+The confirmed development GPU is an **AMD Radeon RX 9700 AI (RDNA3 architecture, 32 GB VRAM)**. AMD GPUs require ROCm, which is Linux-only. On Windows, this requires **WSL2**.
+
+To enable ROCm GPU pass-through in Docker Compose, use the `docker-compose.gpu.yml` override:
+
+```yaml
+cv_worker:
+  image: rocm/pytorch:latest  # ROCm-enabled PyTorch base
+  devices:
+    - /dev/kfd
+    - /dev/dri
+  group_add:
+    - video
+    - render
+  environment:
+    - HSA_OVERRIDE_GFX_VERSION=11.0.0  # RDNA3 gfx1100 override if needed
+```
+
+**Requirements:**
+- WSL2 with Ubuntu 22.04+ running inside Windows
+- AMD GPU driver (AMDGPU) loaded in the WSL2 kernel
+- ROCm 5.7+ installed in WSL2 host
+
+```bash
+# In WSL2: verify ROCm sees the GPU
+rocm-smi --showproductname
+```
+
+See `docs/QUICKSTART.md` for the full WSL2 + ROCm setup walkthrough.
+
+### Docker GPU Configuration (NVIDIA — Alternative)
+
+For NVIDIA GPU users (not the confirmed hardware):
 
 ```yaml
 cv_worker:
@@ -315,6 +390,6 @@ cv_worker:
             capabilities: [gpu]
 ```
 
-This requires `nvidia-container-toolkit` installed on the Docker host. See the [NVIDIA Container Toolkit install guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
+This requires `nvidia-container-toolkit` installed on the Docker host.
 
-GPU is **optional** for MVP. The `docker-compose.yml` defaults to CPU-only. A `docker-compose.gpu.yml` override file is provided for GPU users (Phase 02).
+GPU is **optional** for MVP. The `docker-compose.yml` defaults to CPU-only. The `docker-compose.gpu.yml` override provides the ROCm path for AMD hardware.
