@@ -27,7 +27,7 @@ def validate_upload(filename: str, size: int) -> None:
         )
     if size > settings.max_upload_size_bytes:
         raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail={
                 "error": "file_too_large",
                 "detail": "Video exceeds the configured upload limit.",
